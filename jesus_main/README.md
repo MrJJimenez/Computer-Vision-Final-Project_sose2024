@@ -1,4 +1,4 @@
-<img src="points.png" alt="drawing" width="200"/>
+<img src="points.png" alt="drawing" width="600"/>
 
 # Workflow
 
