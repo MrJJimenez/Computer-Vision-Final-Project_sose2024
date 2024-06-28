@@ -52,10 +52,6 @@ function coords = drawRectangleAndReturnCoordinates(image)
 
     plot(rec_p4(1), rec_p4(2), '.', 'MarkerSize', 15, 'LineWidth', 5, 'Color', 'green'); % Point 4
     text(rec_p4(1), rec_p4(2), '4','Color', 'green', 'FontSize', 30,'FontWeight', 'bold');
-    
-   
-    
-
 
     % Get vanish point vp
     % Wait for the user to click on the image,
@@ -65,7 +61,6 @@ function coords = drawRectangleAndReturnCoordinates(image)
     vpoint = round(vpoint);
     
 
-    
     % plot vanish point on image
     plot(vpoint(1), vpoint(2), '.', 'MarkerSize', 30, 'LineWidth', 5, 'Color', 'green'); % Plot the vanish point
     text(vpoint(1), vpoint(2), 'vp', 'Color', 'green', 'FontSize', 30, 'FontWeight', 'bold'); % Display vanish point
@@ -162,5 +157,6 @@ function intersection = calculateIntersection(line, edge)
     px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / denominator;
     py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / denominator;
     
-    intersection = [px, py];
+    % Round the coordinates to the nearest integer (pixel coordinates)
+    intersection = round([px, py]);
 end
