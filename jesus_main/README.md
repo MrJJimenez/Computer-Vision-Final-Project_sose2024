@@ -1,4 +1,4 @@
-![Alt text](points.png)
+<img src="points.png" alt="drawing" width="200"/>
 
 # Workflow
 
