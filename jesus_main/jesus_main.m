@@ -3,42 +3,65 @@ image = imread('cocina.JPG');
 
 % #########################################################
 % STEP 1 select points on image and get vertices
-px_points_coord = select_points(image)
-
-%  point 1; down left 
-%  point 2; down right
-%  point 7; up left
-%  point 8; up right
+% [point 1;
+%  point 2;
+%  point 3;
+%  point 4;
+%  point 5;
+%  point 6;
+%  point 7;
+%  point 8;
+%  point 9;
+%  point 10;
+%  point 11;
+%  point 12;
 %  vanish point
+px_vertices2d = select_points(image)
+
+% #########################################################
+% STEP 2 transform and scale 2D vertices to new coordinate system 
+[px_h, px_w, rgb] = size(image);
+% invert "y" pixel 
+vertices2d(:, 1) = px_points_coord(:, 1) / px_w;
+vertices2d(:, 2) = (px_h - px_vertices2d(:, 2) + 1)/ px_w;
+
+vertices3d = vertices3D(px_vertices2d, 10)
+vertices3d(:,1)
+figure
+scatter3(vertices3d(:,1), vertices3d(:,2), vertices3d(:,3))
+for i=1:13
+    c=num2str(i);
+    c=[' ',c];
+    text(vertices3d(i,1),vertices3d(i,2),vertices3d(i,3),c)
+end
+xlabel('X')
+ylabel('Y')
+zlabel('Z')
+
 
 % #########################################################
 % STEP 2 save all pixel coordinate into a new matrix (px_x, px_y, rgb values)
-% for better procesing letter
+%px_coord2d = zeros(px_h*px_w, 5);
+
 %{
-[px_h, px_w, rgb] = size(image);
-px_coord2d = zeros(px_h*px_w, 5);
-for i=1:px_h
+% for i=1:px_h
     for j=1:px_w
         px_coord2d(j+(i-1)*px_w,1)=j;
         px_coord2d(j+(i-1)*px_w,2)=i;
         px_coord2d(j+(i-1)*px_w,3:5)=image(i,j,:);
     end
 end
+%}
 
-% #########################################################
-% STEP 3 transform and scale selected points to new coordinate system 
 
 % invert "y" pixel 
-px_coord2d(:, 2) = px_h - px_coord2d(:, 2) + 1;
-px_points_coord(:, 2) = px_h - px_points_coord(:, 2) + 1;
-
+%px_coord2d(:, 2) = px_h - px_coord2d(:, 2) + 1;
 % scale coordinates
-px_coord2d(:, 1) =  px_coord2d(:, 1) / px_w;
-px_coord2d(:, 2) =  px_coord2d(:, 1) / px_h;
+%px_coord2d(:, 1) =  px_coord2d(:, 1) / px_w;
+%px_coord2d(:, 2) =  px_coord2d(:, 1) / px_h;
 
-px_points_coord(:, 1) = px_points_coord(:, 1) / px_w;
-px_points_coord(:, 2) = px_points_coord(:, 1) / px_w;
-%}
+
+
 
 function coords = select_points(image)
     % this function take as input a image 
@@ -105,14 +128,14 @@ function coords = select_points(image)
     vertices2D_px(8,:) = p8;
     vertices2D_px(7,:) = p7;
 
-    vertices2D_px(3,:) = [(y_max-y_vp)/gradient(1) + x_vp; y_max];
-    vertices2D_px(5,:) = [1; (1-x_vp)*gradient(1) + y_vp];
-    vertices2D_px(4,:) = [(y_max-y_vp)/gradient(2) + x_vp; y_max];
-    vertices2D_px(6,:) = [x_max; (x_max-x_vp)*gradient(2) + y_vp];
-    vertices2D_px(10,:) = [(1-y_vp)/gradient(3) + x_vp; 1];
-    vertices2D_px(12,:) = [x_max; (x_max-x_vp)*gradient(3) + y_vp];
-    vertices2D_px(9,:) = [(1-y_vp)/gradient(4) + x_vp; 1];
-    vertices2D_px(11,:) = [1; (1-x_vp)*gradient(4) + y_vp];
+    vertices2D_px(3,:)  = [(y_max-y_vp)/gradient(1) + x_vp;       y_max];
+    vertices2D_px(5,:)  = [1;                                     (1-x_vp)*gradient(1) + y_vp];
+    vertices2D_px(4,:)  = [(y_max-y_vp)/gradient(2) + x_vp;       y_max];
+    vertices2D_px(6,:)  = [x_max;                                 (x_max-x_vp)*gradient(2) + y_vp];
+    vertices2D_px(10,:) = [(1-y_vp)/gradient(3) + x_vp;           1];
+    vertices2D_px(12,:) = [x_max;                                 (x_max-x_vp)*gradient(3) + y_vp];
+    vertices2D_px(9,:)  = [(1-y_vp)/gradient(4) + x_vp;           1];
+    vertices2D_px(11,:) = [1;                                     (1-x_vp)*gradient(4) + y_vp];
 
     hold on;
     for i = 1:12
@@ -122,82 +145,46 @@ function coords = select_points(image)
     end
     hold off;
   
-    % Return the coordinates
+    % Return coordinates
     coords = [vertices2D_px; vpoint];
 end
-%{
-function intersection_point = findLineEdgeIntersections(image, vspoint, point2)
-    % this fuction find the intersection point between the line (vanish_point, one rectangle edge) and the image border
-    % copy image img
-    img = image;
-    
-    % Get the image dimensions
-    [height, width, ~] = size(img);
-    
-    % Define the edges of the image
-    edges = [0, 0, width-1, 0;               % Top edge
-             0, height-1, width-1, height-1; % Bottom edge
-             0, 0, 0, height-1;              % Left edge
-             width-1, 0, width-1, height-1]; % Right edge
-    
-    % Define the line by the two points
-    line = [vspoint; point2];
-    
-    % Initialize the intersections array
-    intersection = [];
-    intersection_point = [];
-    % Iterate through each edge
-    for i = 1:size(edges, 1)
-        % Get the intersection point
-        intersection = calculateIntersection(line, edges(i, :));
-        
-        % Check if the intersection point is within the image bounds
-        if ~isempty(intersection) && ...
-           intersection(1) >= 0 && intersection(1) <= width-1 && ...
-           intersection(2) >= 0 && intersection(2) <= height-1
-    
-            vec1 = [point2(1) - vspoint(1), point2(2) - vspoint(2)];
-            vec2 = [intersection(1) - vspoint(1), intersection(2) - vspoint(2)];
-            % Normalize the vectors
-            normVec1 = vec1 / norm(vec1);
-            normVec2 = vec2 / norm(vec2);
-            % Calculate the dot product
-            dotProduct = dot(normVec1, normVec2);
-    
-            % Check if the dot product is close to 1
-            isSameDirection = abs(dotProduct - 1) < 0.2;
 
-            if isSameDirection
-                intersection_point = intersection;
-            end
-            
-        end
+function vertices3d = vertices3D(vertices2d, f)
+    % this convert the 2D vertices to 3D
+    % create vertices3d where new coordinates will be saved
+    vertices3d = ones(size(vertices2d, 1), 3);
+    view_x = vertices2d(13,1);
+    view_y = vertices2d(13,2);
+    view_z = 0;
+
+    for i=1:6
+        g                = -view_y / (vertices2d(i,2) - view_y);
+        vertices3d(i,1) = g * (vertices2d(i,1) - view_x) + view_x;
+        vertices3d(i,3) = g * (-f - view_z) + view_z;
+        vertices3d(i,2) = 0;
+        
     end
+    vertices3d(13,1) = view_x;
+    vertices3d(13,2) = view_y;
+    vertices3d(13,3) = vertices3d(2,3);
+
+    height=-(vertices2d(7,2)-vertices2d(1,2))* vertices3d(1,3)/f;
+
+     vertices3d(7,1)= vertices3d(1,1);
+     vertices3d(7,2)=height;
+     vertices3d(7,3)= vertices3d(1,3);
+
+     vertices3d(8,1)= vertices3d(2,1);
+     vertices3d(8,2)=height;
+     vertices3d(8,3)= vertices3d(2,3);
+
+    for i=9:12
+        g                = (height - view_y) / (vertices2d(i,2) - view_y);
+         vertices3d(i,1) = g * (vertices2d(i,1) - view_x) + view_x;
+         vertices3d(i,3) = g * (-f - view_z) + view_z;
+         vertices3d(i,2) = height;
+    end
+
+
     
 end
-
-function intersection = calculateIntersection(line, edge)
-    % Extract points from the line
-    x1 = line(1, 1);
-    y1 = line(1, 2);
-    x2 = line(2, 1);
-    y2 = line(2, 2);
-    
-    % Extract points from the edge
-    x3 = edge(1);
-    y3 = edge(2);
-    x4 = edge(3);
-    y4 = edge(4);
-    
-    % Calculate the intersection point using line equations
-    denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-    if denominator == 0
-        intersection = [];
-        return;
-    end
-    px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / denominator;
-    py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / denominator;
-    
-    % Round the coordinates to the nearest integer (pixel coordinates)
-    intersection = round([px, py]);
-end%}
