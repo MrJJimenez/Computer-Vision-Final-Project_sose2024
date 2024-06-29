@@ -19,20 +19,25 @@ image = imread('cocina.JPG');
 px_vertices2d = select_points(image)
 
 % #########################################################
-% STEP 2 transform and scale 2D vertices to new coordinate system 
-[px_h, px_w, rgb] = size(image);
-% invert "y" pixel 
-vertices2d(:, 1) = px_points_coord(:, 1) / px_w;
-vertices2d(:, 2) = (px_h - px_vertices2d(:, 2) + 1)/ px_w;
+% STEP2  calcule Vertices in 3D using camera focal length
 
-vertices3d = vertices3D(px_vertices2d, 10)
-vertices3d(:,1)
+% invert "y" pixel s
+vertices2d(:, 1) = px_vertices2d(:, 1);
+vertices2d(:, 2) = (px_h - px_vertices2d(:, 2) + 1);
+
+vertices3d = vertices3D(vertices2d, 10);
+
+% invert "y" pixel 
+%vertices2d(:, 1) = px_points_coord(:, 1) / px_w;
+%vertices2d(:, 2) = (px_h - px_vertices2d(:, 2) + 1)/ px_w;
+
+% plot  points
 figure
 scatter3(vertices3d(:,1), vertices3d(:,2), vertices3d(:,3))
 for i=1:13
     c=num2str(i);
     c=[' ',c];
-    text(vertices3d(i,1),vertices3d(i,2),vertices3d(i,3),c)
+    text(vertices3d(i,1), vertices3d(i,2),vertices3d(i,3),c)
 end
 xlabel('X')
 ylabel('Y')
