@@ -1,8 +1,39 @@
 % load a image
 image = imread('cocina.JPG');
-size(image)
-px_points_coordinate = select_points(image);
-px_points_coordinate
+
+% #########################################################
+% STEP 1 select points on image 
+px_points_coord = select_points(image);
+% [ vanish point; 
+%  point 1; down left 
+%  point 2: down right
+%  point 7: up left
+%  point 8] up right
+
+% #########################################################
+% STEP 2 save all pixel coordinate into a new matrix (px_x, px_y, rgb values)
+% for better procesing letter
+
+[px_h, px_w, rgb] = size(image);
+px_coord2d = zeros(px_h*px_w, 5);
+for i=1:px_h
+    for j=1:px_w
+        px_coord2d(j+(i-1)*px_w,1)=j;
+        px_coord2d(j+(i-1)*px_w,2)=i;
+        px_coord2d(j+(i-1)*px_w,3:5)=image(i,j,:);
+    end
+end
+ 
+% #########################################################
+% STEP 3 transform and scale selected points to new coordinate system 
+
+% invert all y pixel coordinate
+px_coord2d(:, 2) = px_h - px_coord2d(:, 2) + 1;
+
+px_points_coord
+
+px_points_coord(:, 2) = px_h - px_points_coord(:, 2) + 1;
+px_points_coord
 
 function coords = select_points(image)
     % this function take as input a image 
@@ -72,7 +103,6 @@ function coords = select_points(image)
     
 
     % plot vanish point on image
-    plot(10, 500, '.', 'MarkerSize', 30, 'LineWidth', 5, 'Color', 'green'); % Plot the vanish point
     plot(vpoint(1), vpoint(2), '.', 'MarkerSize', 30, 'LineWidth', 5, 'Color', 'green'); % Plot the vanish point
     text(vpoint(1), vpoint(2), 'vp', 'Color', 'green', 'FontSize', 30, 'FontWeight', 'bold'); % Display vanish point
     
