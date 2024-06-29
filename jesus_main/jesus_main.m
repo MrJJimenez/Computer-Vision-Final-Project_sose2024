@@ -1,11 +1,18 @@
 % load a image
 image = imread('cocina.JPG');
+size(image)
+px_points_coordinate = select_points(image);
+px_points_coordinate
 
-rectangle_coordinate = drawRectangleAndReturnCoordinates(image);
+function coords = select_points(image)
+    % this function take as input a image 
+    %return [ vanish point; 
+    %         point 1; down left 
+    %         point 2: down right
+    %         point 7: up left
+    %         point 8] up right
 
-
-function coords = drawRectangleAndReturnCoordinates(image)
-    % Read the image
+    % copy the image
     img = image;
     
     % Display the image
@@ -25,14 +32,14 @@ function coords = drawRectangleAndReturnCoordinates(image)
     y1 = position(2);
     x2 = x1 + position(3);
     y2 = y1 + position(4);
+    
+    p1 = [x1, y2]; % Bottom left
+    p2  = [x2, y2]; % Bottom right
+    p7  = [x1, y1]; % Top left
+    p8 = [x2, y1]; % Top right
+    
 
-    rec_p1  = [x1, y1]; % Top left
-    rec_p2 = [x2, y1]; % Top right
-    rec_p3  = [x2, y2]; % Bottom right
-    rec_p4 = [x1, y2]; % Bottom left
-
-    % Return the coordinates
-    coords = [x1, y1; x2, y2];
+    
     
     % Annotate the coordinates on the image
     hold on;
@@ -41,17 +48,20 @@ function coords = drawRectangleAndReturnCoordinates(image)
     plot([x1, x1], [y1, y2], 'r', 'LineWidth', 2); % Left edge
     plot([x2, x2], [y1, y2], 'r', 'LineWidth', 2); % Right edge
 
-    plot(rec_p1(1), rec_p1(2), '.', 'MarkerSize', 15, 'LineWidth', 5, 'Color', 'green'); % Point 1
-    text(rec_p1(1), rec_p1(2), '1','Color', 'green', 'FontSize', 30,'FontWeight', 'bold');
+    plot(p1(1), p1(2), '.', 'MarkerSize', 15, 'LineWidth', 5, 'Color', 'green'); % Point 1
+    text(p1(1), p1(2), '1','Color', 'green', 'FontSize', 30,'FontWeight', 'bold');
+    plot(p2(1), p2(2), '.', 'MarkerSize', 15, 'LineWidth', 5, 'Color', 'green'); % Point 2
+    text(p2(1), p2(2), '2','Color', 'green', 'FontSize', 30,'FontWeight', 'bold');
+
+    plot(p7(1), p7(2), '.', 'MarkerSize', 15, 'LineWidth', 5, 'Color', 'green'); % Point 3
+    text(p7(1), p7(2), '7','Color', 'green', 'FontSize', 30,'FontWeight', 'bold');
     
-    plot(rec_p2(1), rec_p2(2), '.', 'MarkerSize', 15, 'LineWidth', 5,'Color', 'green'); % Point 2
-    text(rec_p2(1), rec_p2(2), '2','Color', 'green', 'FontSize', 30,'FontWeight', 'bold');
+    plot(p8(1), p8(2), '.', 'MarkerSize', 15, 'LineWidth', 5,'Color', 'green'); % Point 4
+    text(p8(1), p8(2), '8','Color', 'green', 'FontSize', 30,'FontWeight', 'bold');
 
-    plot(rec_p3(1), rec_p3(2), '.', 'MarkerSize', 15, 'LineWidth', 5, 'Color', 'green'); % Point 3
-    text(rec_p3(1), rec_p3(2), '3','Color', 'green', 'FontSize', 30,'FontWeight', 'bold');
+    
 
-    plot(rec_p4(1), rec_p4(2), '.', 'MarkerSize', 15, 'LineWidth', 5, 'Color', 'green'); % Point 4
-    text(rec_p4(1), rec_p4(2), '4','Color', 'green', 'FontSize', 30,'FontWeight', 'bold');
+    
 
     % Get vanish point vp
     % Wait for the user to click on the image,
@@ -62,27 +72,35 @@ function coords = drawRectangleAndReturnCoordinates(image)
     
 
     % plot vanish point on image
+    plot(10, 500, '.', 'MarkerSize', 30, 'LineWidth', 5, 'Color', 'green'); % Plot the vanish point
     plot(vpoint(1), vpoint(2), '.', 'MarkerSize', 30, 'LineWidth', 5, 'Color', 'green'); % Plot the vanish point
     text(vpoint(1), vpoint(2), 'vp', 'Color', 'green', 'FontSize', 30, 'FontWeight', 'bold'); % Display vanish point
     
-    % find interception points on image edges
-    edge_p5 = findLineEdgeIntersections(image, vpoint, rec_p1);
-    plot([vpoint(1), edge_p5(1)], [vpoint(2), edge_p5(2)], 'r-', 'LineWidth', 2, 'Color', 'red'); % Plot the line
-    text(edge_p5(1), edge_p5(2), '5','Color', 'green', 'FontSize', 30,'FontWeight', 'bold');
+    p3 = findLineEdgeIntersections(image, vpoint, p1);
+    plot([vpoint(1), p3(1)], [vpoint(2), p3(2)], 'r-', 'LineWidth', 2, 'Color', 'red'); % Plot the line
+    text(p3(1), p3(2), '3','Color', 'green', 'FontSize', 30,'FontWeight', 'bold');
 
-    edge_p6 = findLineEdgeIntersections(image, vpoint, rec_p2);
-    plot([vpoint(1), edge_p6(1)], [vpoint(2), edge_p6(2)], 'r-', 'LineWidth', 2, 'Color', 'red'); % Plot the line
-    text(edge_p6(1), edge_p6 (2), '6','Color', 'green', 'FontSize', 30,'FontWeight', 'bold');
+    p6 = findLineEdgeIntersections(image, vpoint, p2);
+    plot([vpoint(1), p6(1)], [vpoint(2), p6(2)], 'r-', 'LineWidth', 2, 'Color', 'red'); % Plot the line
+    text(p6(1), p6(2), '6','Color', 'green', 'FontSize', 30,'FontWeight', 'bold');
+
     
-    edge_p7 = findLineEdgeIntersections(image, vpoint, rec_p3);
-    plot([vpoint(1), edge_p7(1)], [vpoint(2), edge_p7(2)], 'r-', 'LineWidth', 2, 'Color', 'red'); % Plot the line
-    text(edge_p7(1), edge_p7(2), '7','Color', 'green', 'FontSize', 30,'FontWeight', 'bold');
+    p9 = findLineEdgeIntersections(image, vpoint, p7);
+    plot([vpoint(1), p9(1)], [vpoint(2), p9(2)], 'r-', 'LineWidth', 2, 'Color', 'red'); % Plot the line
+    text(p9(1), p9(2), '9','Color', 'green', 'FontSize', 30,'FontWeight', 'bold');
 
-    edge_p8 = findLineEdgeIntersections(image, vpoint, rec_p4);
-    plot([vpoint(1), edge_p8(1)], [vpoint(2), edge_p8(2)], 'r-', 'LineWidth', 2, 'Color', 'red'); % Plot the line
-    text(edge_p8(1), edge_p8(2), '8','Color', 'green', 'FontSize', 30,'FontWeight', 'bold');
+    p12 = findLineEdgeIntersections(image, vpoint, p8);
+    plot([vpoint(1), p12(1)], [vpoint(2), p12(2)], 'r-', 'LineWidth', 2, 'Color', 'red'); % Plot the line
+    text(p12(1), p12 (2), '12','Color', 'green', 'FontSize', 30,'FontWeight', 'bold');
+    
+    
+
+    
  
     hold off;
+
+    % Return the coordinates
+    coords = [vpoint; p1; p2; p7; p8];
 end
 
 function intersection_point = findLineEdgeIntersections(image, vspoint, point2)

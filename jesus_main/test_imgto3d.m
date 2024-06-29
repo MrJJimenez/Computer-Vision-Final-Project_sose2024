@@ -9,17 +9,16 @@ B = img(:,:,3);
 R = double(R) / 255;
 G = double(G) / 255;
 B = double(B) / 255;
-size(R)
 
 % Combine the normalized channels into an RGB image
 C = cat(3, R, G, B);
-
+size(C)
 % Create a meshgrid for the surface plot
 [x, y] = meshgrid(1:size(img, 2), 1:size(img, 1));
-
+size(x)
 % Plot the surface with RGB color
 figure;
-surf(x, y, zeros(size(R)), 'CData', C,'edgecolor', 'none');
+surf(x, zeros(size(R)), y,  'CData', C,'edgecolor', 'none');
 
 % Adjust the view
 view(3);
