@@ -6,8 +6,8 @@ image = imread('cocina.JPG');
 px_points_coord = select_points(image);
 % [ vanish point; 
 %  point 1; down left 
-%  point 2: down right
-%  point 7: up left
+%  point 2; down right
+%  point 7; up left
 %  point 8] up right
 
 % #########################################################
@@ -23,17 +23,21 @@ for i=1:px_h
         px_coord2d(j+(i-1)*px_w,3:5)=image(i,j,:);
     end
 end
- 
+
 % #########################################################
 % STEP 3 transform and scale selected points to new coordinate system 
 
-% invert all y pixel coordinate
+% invert "y" pixel 
 px_coord2d(:, 2) = px_h - px_coord2d(:, 2) + 1;
-
-px_points_coord
-
 px_points_coord(:, 2) = px_h - px_points_coord(:, 2) + 1;
-px_points_coord
+
+% scale coordinates
+px_coord2d(:, 1) =  px_coord2d(:, 1) / px_w;
+px_coord2d(:, 2) =  px_coord2d(:, 1) / px_h;
+
+px_points_coord(:, 1) = px_points_coord(:, 1) / px_w;
+px_points_coord(:, 2) = px_points_coord(:, 1) / px_w;
+
 
 function coords = select_points(image)
     % this function take as input a image 
