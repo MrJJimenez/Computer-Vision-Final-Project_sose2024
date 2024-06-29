@@ -1,6 +1,6 @@
 % load a image
-image = imread('cocina.JPG');
-
+image = imread('cocinasmall.jpeg');
+f = 100;
 % #########################################################
 % STEP 1 select points on image and get vertices
 % [point 1;
@@ -20,18 +20,19 @@ px_vertices2d = select_points(image)
 
 % #########################################################
 % STEP2  calcule Vertices in 3D using camera focal length
-
+[px_h, px_w, c] = size(image);
 % invert "y" pixel s
 vertices2d(:, 1) = px_vertices2d(:, 1);
 vertices2d(:, 2) = (px_h - px_vertices2d(:, 2) + 1);
 
-vertices3d = vertices3D(vertices2d, 10);
+vertices3d = vertices3D(vertices2d, f);
 
 % invert "y" pixel 
 %vertices2d(:, 1) = px_points_coord(:, 1) / px_w;
 %vertices2d(:, 2) = (px_h - px_vertices2d(:, 2) + 1)/ px_w;
 
-% plot  points
+%{ 
+plot  points
 figure
 scatter3(vertices3d(:,1), vertices3d(:,2), vertices3d(:,3))
 for i=1:13
@@ -42,31 +43,40 @@ end
 xlabel('X')
 ylabel('Y')
 zlabel('Z')
-
-
+%}
 % #########################################################
 % STEP 2 save all pixel coordinate into a new matrix (px_x, px_y, rgb values)
-%px_coord2d = zeros(px_h*px_w, 5);
+px_coord2d = zeros(px_h*px_w, 5);
 
-%{
-% for i=1:px_h
+
+for i=1:px_h
     for j=1:px_w
         px_coord2d(j+(i-1)*px_w,1)=j;
         px_coord2d(j+(i-1)*px_w,2)=i;
         px_coord2d(j+(i-1)*px_w,3:5)=image(i,j,:);
     end
 end
-%}
 
 
 % invert "y" pixel 
-%px_coord2d(:, 2) = px_h - px_coord2d(:, 2) + 1;
+px_coord2d(:, 2) = px_h - px_coord2d(:, 2) + 1;
 % scale coordinates
 %px_coord2d(:, 1) =  px_coord2d(:, 1) / px_w;
 %px_coord2d(:, 2) =  px_coord2d(:, 1) / px_h;
 
+height  = vertices3d(7,2);
+leftx   = vertices3d(1,1);
+rightx  = vertices3d(4,1);
+coord3d = coord_2dto3d(px_coord2d, vertices2d,vertices3d,px_h,px_w,f,height,leftx,rightx);
 
-
+xx=coord3d(:,1);
+yy=coord3d(:,2);
+zz=coord3d(:,3);
+color=coord3d(:,4:6)/255;
+%axes(handles.axes2);
+pcshow([xx yy zz],color,'VerticalAxisDir','Down')
+set(gcf,'color','[0.94,0.94,0.94]');
+set(gca,'color','[0.94,0.94,0.94]');
 
 function coords = select_points(image)
     % this function take as input a image 
@@ -193,3 +203,64 @@ function vertices3d = vertices3D(vertices2d, f)
 
     
 end
+
+function [coord3d] = coord_2dto3d(coord2d,corners2d,corners3d,m,n,f,height,leftx,rightx)
+    % % input:
+    % coord2d: 2d coordinates of all pixels  
+    % corners2d: 2d coordinates of corners points 
+    % corners3d: 3d coordinates of corners points 
+    % m,n: size of image
+    % f:focal length 
+    % height: ceil y coordinate 
+    % leftx: left wall x coordinate
+    % rightx: right  wall x coordinate
+    % output:
+    % coord3: 3d coordinates of all pixels  
+    % %
+    coord2d(:,1)=coord2d(:,1);%/n;
+    coord2d(:,2)=coord2d(:,2);%/m;
+    
+    
+    vp=corners3d(13,:);
+    t1=corners2d(1,:)-vp(1:2);
+    t2=corners2d(2,:)-vp(1:2);
+    t7=corners2d(7,:)-vp(1:2);
+    t8=corners2d(8,:)-vp(1:2);
+    is_bottom__plane_2= @(point2d) (point2d(2) <= t1(2)) && (point2d(2) <= point2d(1)*t1(2)/t1(1)) && (point2d(2) <= point2d(1)*t2(2)/t2(1));
+    is_right_plane_2= @(point2d) (point2d(1) >= t2(1)) && (point2d(2) <= point2d(1)*t8(2)/t8(1)) && (point2d(2)>= point2d(1)*t2(2)/t2(1));
+    is_top_plane_2= @(point2d) (point2d(2)>=t8(2)) && (point2d(2) >= point2d(1)*t8(2)/t8(1)) && (point2d(2)>=point2d(1) * t7(2)/t7(1));
+    is_left_plane_2=@(point2d) (point2d(1) <= t7(1)) && (point2d(2)<=point2d(1) *t7(2)/t7(1)) && (point2d(2)>=point2d(1)*t1(2)/t1(1) );
+    is_center_plane_2 = @(point2d)  (point2d(1)<=t2(1)) && (point2d(1) >=t1(1)) && (point2d(2)<=t7(2)) && (point2d(2) >=t1(2));
+    
+    length=size(coord2d,1);
+    coord3d=zeros(length,6);
+
+    for i=1:length
+        point2d=coord2d(i,1:2);
+        coord3d(i,4:6)=coord2d(i,3:5);
+        if is_bottom__plane_2(point2d-vp(1:2))
+            coord3d(i,2)=0;
+            coord3d(i,3)=-vp(2)/(vp(2)-point2d(2))*f;
+            coord3d(i,1)=-coord3d(i,3)/f*(point2d(1)-vp(1))+vp(1);
+        elseif is_top_plane_2(point2d-vp(1:2))
+            coord3d(i,2)=height;
+            coord3d(i,3)=-(vp(2)-height)/(vp(2)-point2d(2))*f;
+            coord3d(i,1)=-coord3d(i,3)/f*(point2d(1)-vp(1))+vp(1); 
+        elseif is_left_plane_2(point2d-vp(1:2))
+            coord3d(i,1)=leftx;
+            coord3d(i,3)=-(vp(1)-leftx)/(vp(1)-point2d(1))*f;
+            coord3d(i,2)=-coord3d(i,3)/f*(point2d(2)-vp(2))+vp(2);
+        elseif is_right_plane_2(point2d-vp(1:2))
+            coord3d(i,1)=rightx;
+            coord3d(i,3)=-(vp(1)-rightx)/(vp(1)-point2d(1))*f;
+            coord3d(i,2)=-coord3d(i,3)/f*(point2d(2)-vp(2))+vp(2);
+        elseif is_center_plane_2(point2d-vp(1:2))
+            coord3d(i,3)=vp(3);
+            coord3d(i,2)=-coord3d(i,3)/f*(point2d(2)-vp(2))+vp(2);
+            coord3d(i,1)=-coord3d(i,3)/f*(point2d(1)-vp(1))+vp(1);
+
+        
+        end
+    end
+end
+    
