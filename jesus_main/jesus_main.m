@@ -1,6 +1,6 @@
 % load a image
 image = imread('cocinasmall.jpeg');
-f = 100;
+f = 300;
 % #########################################################
 % STEP 1 select points on image and get vertices
 % [point 1;
@@ -62,21 +62,22 @@ end
 px_coord2d(:, 2) = px_h - px_coord2d(:, 2) + 1;
 % scale coordinates
 %px_coord2d(:, 1) =  px_coord2d(:, 1) / px_w;
-%px_coord2d(:, 2) =  px_coord2d(:, 1) / px_h;
+%px_coord2d(:, 2) =  px_coord2d(:, 2) / px_h;
 
 height  = vertices3d(7,2);
 leftx   = vertices3d(1,1);
 rightx  = vertices3d(4,1);
-coord3d = coord_2dto3d(px_coord2d, vertices2d,vertices3d,px_h,px_w,f,height,leftx,rightx);
+coord3d = image2dto3d(px_coord2d, vertices2d,vertices3d,px_h,px_w,f,height,leftx,rightx);
 
 xx=coord3d(:,1);
 yy=coord3d(:,2);
 zz=coord3d(:,3);
 color=coord3d(:,4:6)/255;
-%axes(handles.axes2);
+
 pcshow([xx yy zz],color,'VerticalAxisDir','Down')
-set(gcf,'color','[0.94,0.94,0.94]');
-set(gca,'color','[0.94,0.94,0.94]');
+%set(gcf,'color','[0.94,0.94,0.94]');
+%set(gca,'color','[0.94,0.94,0.94]');
+view([20, 90]);
 
 function coords = select_points(image)
     % this function take as input a image 
@@ -185,13 +186,13 @@ function vertices3d = vertices3D(vertices2d, f)
 
     height=-(vertices2d(7,2)-vertices2d(1,2))* vertices3d(1,3)/f;
 
-     vertices3d(7,1)= vertices3d(1,1);
-     vertices3d(7,2)=height;
-     vertices3d(7,3)= vertices3d(1,3);
+     vertices3d(7,1) = vertices3d(1,1);
+     vertices3d(7,2) = height;
+     vertices3d(7,3) = vertices3d(1,3);
 
-     vertices3d(8,1)= vertices3d(2,1);
-     vertices3d(8,2)=height;
-     vertices3d(8,3)= vertices3d(2,3);
+     vertices3d(8,1) = vertices3d(2,1);
+     vertices3d(8,2) = height;
+     vertices3d(8,3) = vertices3d(2,3);
 
     for i=9:12
         g                = (height - view_y) / (vertices2d(i,2) - view_y);
@@ -204,7 +205,7 @@ function vertices3d = vertices3D(vertices2d, f)
     
 end
 
-function [coord3d] = coord_2dto3d(coord2d,corners2d,corners3d,m,n,f,height,leftx,rightx)
+function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,m,n,f,height,leftx,rightx)
     % % input:
     % coord2d: 2d coordinates of all pixels  
     % corners2d: 2d coordinates of corners points 
