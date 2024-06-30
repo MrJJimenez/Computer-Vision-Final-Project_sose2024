@@ -1,5 +1,5 @@
 % load a image
-image = imread('cocinasmall.jpeg');
+image = imread('simple-room.png');
 f = 300;
 % #########################################################
 % STEP 1 select points on image and get vertices
@@ -68,6 +68,11 @@ height  = vertices3d(7,2);
 leftx   = vertices3d(1,1);
 rightx  = vertices3d(4,1);
 coord3d = image2dto3d(px_coord2d, vertices2d,vertices3d,px_h,px_w,f,height,leftx,rightx);
+coord3d_big = zeros( ceil(max(coord3d(:,1))),ceil(max(coord3d(:,2))),ceil(max(coord3d(:,3))));
+%coord3d_big(:,1)=coord3d(:,1);
+size(coord3d)
+coord3d_big= fillmissing(coord3d_big, "movmedian", 10);
+size( coord3d_big(coord3d_big~=0))
 
 xx=coord3d(:,1);
 yy=coord3d(:,2);
@@ -77,7 +82,7 @@ color=coord3d(:,4:6)/255;
 pcshow([xx yy zz],color,'VerticalAxisDir','Down')
 %set(gcf,'color','[0.94,0.94,0.94]');
 %set(gca,'color','[0.94,0.94,0.94]');
-view([20, 90]);
+view([0, 0]);
 
 function coords = select_points(image)
     % this function take as input a image 
