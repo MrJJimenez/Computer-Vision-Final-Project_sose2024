@@ -1,5 +1,5 @@
 % load a image
-image = imread('simple-room.png');
+image = imread('metro-station.png');
 f = 300;
 % #########################################################
 % STEP 1 select points on image and get vertices
@@ -17,7 +17,7 @@ f = 300;
 %  point 12;
 %  vanish point
 px_vertices2d = select_points(image)
-
+f=focal_length(px_vertices2d)
 % #########################################################
 % STEP2  calcule Vertices in 3D using camera focal length
 [px_h, px_w, c] = size(image);
@@ -68,21 +68,38 @@ height  = vertices3d(7,2);
 leftx   = vertices3d(1,1);
 rightx  = vertices3d(4,1);
 coord3d = image2dto3d(px_coord2d, vertices2d,vertices3d,px_h,px_w,f,height,leftx,rightx);
-coord3d_big = zeros( ceil(max(coord3d(:,1))),ceil(max(coord3d(:,2))),ceil(max(coord3d(:,3))));
+%coord3d_big = zeros( ceil(max(coord3d(:,1))),ceil(max(coord3d(:,2))),ceil(max(coord3d(:,3))));
 %coord3d_big(:,1)=coord3d(:,1);
-size(coord3d)
-coord3d_big= fillmissing(coord3d_big, "movmedian", 10);
-size( coord3d_big(coord3d_big~=0))
+%size(coord3d)
+%coord3d_big= fillmissing(coord3d_big, "movmedian", 10);
+%size( coord3d_big(coord3d_big~=0))
 
 xx=coord3d(:,1);
 yy=coord3d(:,2);
 zz=coord3d(:,3);
+max(coord3d(:,1))
+max(coord3d(:,2))
+max(abs(coord3d(:,3)))
+vertices3d(1,3)
 color=coord3d(:,4:6)/255;
 
 pcshow([xx yy zz],color,'VerticalAxisDir','Down')
 %set(gcf,'color','[0.94,0.94,0.94]');
 %set(gca,'color','[0.94,0.94,0.94]');
 view([0, 0]);
+
+function f = focal_length(px_coord2d)
+
+    len1=sqrt( (px_coord2d(13,1)-px_coord2d(5,1))^2 + (px_coord2d(13,2)-px_coord2d(5,2))^2)
+    len2=sqrt( (px_coord2d(13,1)-px_coord2d(4,1))^2 + (px_coord2d(13,2)-px_coord2d(4,2))^2)
+    len3=sqrt( (px_coord2d(13,1)-px_coord2d(11,1))^2 + (px_coord2d(13,2)-px_coord2d(11,2))^2)
+    len4= sqrt( (px_coord2d(13,1)-px_coord2d(10,1))^2 + (px_coord2d(13,2)-px_coord2d(10,2))^2)
+
+    f =  max([len1, len2, len3, len4]);
+ 
+
+end
+
 
 function coords = select_points(image)
     % this function take as input a image 
