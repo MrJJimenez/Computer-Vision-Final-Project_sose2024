@@ -3,7 +3,9 @@ clc
 clear all
 close all
 image = imread('/Users/jesusjimenez/Documents/MyGitProjects/Computer-Vision-Final-Project_sose2024/jesus_main/CV-Challenge-24-Datensatz/oil-painting.png');
-
+size(image)
+%rgb = [double(image(100,100,1))/255, double(image(100,100,2))/255, double(image(100,100,3))/255];
+%rgb
 f = 300;
 % #########################################################
 % STEP 1 select points on image and get vertices
@@ -78,6 +80,26 @@ coord3d = image2dto3d(px_coord2d, vertices2d,vertices3d,px_h,px_w,f,height,leftx
 %coord3d_big= fillmissing(coord3d_big, "movmedian", 10);
 %size( coord3d_big(coord3d_big~=0))
 
+%{
+[x, y, z] = meshgrid(min(coord3d(:,1)):max((coord3d(:,1))), min(coord3d(:,2)):max(coord3d(:,2)), min(coord3d(:,3)):max(coord3d(:,3)));
+mesh3d = fill3d(coord3d, image, f, px_coord2d(13,:))
+figure;
+%hold on
+
+axis equal;   % Make the axes scales match
+ 
+surf(x, y, z,  'CData', mesh3d,'edgecolor', 'none');
+%surf(x1, ones(size(R)), y1,  'CData', C,'edgecolor', 'none');
+% Adjust the view
+%view(3);
+
+% Add labels and title
+xlabel('X-axis');
+ylabel('Y-axis');
+zlabel('Z-axis');
+title('3D Surface Plot of RGB Image');
+
+%}
 xx=coord3d(:,1);
 yy=coord3d(:,2);
 zz=coord3d(:,3);
@@ -92,6 +114,35 @@ pcshow([xx yy zz],color,'VerticalAxisDir','Down')
 %set(gca,'color','[0.94,0.94,0.94]');
 view([0, 0]);
 
+function xyxrgb_mesh =  fill3d(mesh3d, img, f, vp)
+    % Create a meshgrid for the surface plot
+    [m,n,c] = size(img)
+    m
+    n
+    rgb = []
+    rgb_temp = []
+    %[x, y, z] = meshgrid(min(mesh3d(:,1)):max((mesh3d(:,1))), min(mesh3d(:,2)):max(mesh3d(:,2)), min(mesh3d(:,3)):max(mesh3d(:,3)));
+    for i = min(mesh3d(:,1)):max((mesh3d(:,1)))
+        i
+        for j = min(mesh3d(:,2)):max(mesh3d(:,2))
+            j
+            for k = min(mesh3d(:,3)):max(mesh3d(:,3))
+                
+                y2d = int16(m - (f/k)*(j-vp(2)) + vp(2))
+                x2d = -int16((f/k)*(i-vp(1)) + vp(1))
+                if (y2d > m) ||(y2d < 0) || (x2d > n) || (x2d < 0)
+                    rgb_temp = double([0,0,0]);
+                else 
+                    rgb_temp = [double(img(x2d,y2d,1))/255, double(image(x2d,y2d,2))/255, double(image(x2d,y2d,3))/255];
+                end
+                rgb = cat(1, rgb, rgb_temp);
+            end
+        end
+    end
+
+    xyxrgb_mesh = rbg
+
+end
 function f = focal_length(px_coord2d)
 
     len1=sqrt( (px_coord2d(13,1)-px_coord2d(5,1))^2 + (px_coord2d(13,2)-px_coord2d(5,2))^2)
