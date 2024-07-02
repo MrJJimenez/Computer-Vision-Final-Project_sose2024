@@ -1,5 +1,9 @@
 % load a image
-image = imread('metro-station.png');
+clc
+clear all
+close all
+image = imread('/Users/jesusjimenez/Documents/MyGitProjects/Computer-Vision-Final-Project_sose2024/jesus_main/CV-Challenge-24-Datensatz/oil-painting.png');
+
 f = 300;
 % #########################################################
 % STEP 1 select points on image and get vertices
