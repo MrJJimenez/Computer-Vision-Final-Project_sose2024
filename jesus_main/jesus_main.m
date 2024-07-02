@@ -74,6 +74,10 @@ height  = vertices3d(7,2);
 leftx   = vertices3d(1,1);
 rightx  = vertices3d(4,1);
 coord3d = image2dto3d(px_coord2d, vertices2d,vertices3d,px_h,px_w,f,height,leftx,rightx);
+s2 = size(coord3d)
+coord3d_down = coord3d(coord3d(:,2)==height);
+coord3d(300)
+s1= size(coord3d_down)
 %coord3d_big = zeros( ceil(max(coord3d(:,1))),ceil(max(coord3d(:,2))),ceil(max(coord3d(:,3))));
 %coord3d_big(:,1)=coord3d(:,1);
 %size(coord3d)
@@ -100,19 +104,27 @@ zlabel('Z-axis');
 title('3D Surface Plot of RGB Image');
 
 %}
+
+
 xx=coord3d(:,1);
 yy=coord3d(:,2);
 zz=coord3d(:,3);
-max(coord3d(:,1))
-max(coord3d(:,2))
-max(abs(coord3d(:,3)))
-vertices3d(1,3)
+max(coord3d(:,1));
+max(coord3d(:,2));
+max(abs(coord3d(:,3)));
+vertices3d(1,3);
 color=coord3d(:,4:6)/255;
 
 pcshow([xx yy zz],color,'VerticalAxisDir','Down')
-%set(gcf,'color','[0.94,0.94,0.94]');
-%set(gca,'color','[0.94,0.94,0.94]');
-view([0, 0]);
+
+set(gcf,'color','[0.94,0.94,0.94]');
+set(gca,'color','[0.94,0.94,0.94]');
+
+for i = 1:20
+    view([i, 80]);
+end
+
+
 
 function xyxrgb_mesh =  fill3d(mesh3d, img, f, vp)
     % Create a meshgrid for the surface plot
@@ -341,4 +353,6 @@ function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,m,n,f,height,leftx,
         end
     end
 end
+
+
     
