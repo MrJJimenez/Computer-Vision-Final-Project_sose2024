@@ -1,6 +1,8 @@
 % Load and display the image
-PngFilenames=dir(fullfile(jesus_main/CV-Challenge-24-Datensatz/oil-painting.png,'oil-painting.png.png')); 
-img = imread(PngFilenames);
+clc
+clear all
+close all
+img = imread('oil-painting.png');
 imshow(img);
 
 % Assume you have the coordinates of the vanishing point
