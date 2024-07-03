@@ -16,7 +16,8 @@ figure;
 imshow(image);
 title('Original Image');
 % Ask the user for the number of foreground objects
-numObjects = input('Enter the number of foreground objects: ');
+%numObjects = input('Enter the number of foreground objects: ');
+numObjects = 1;
 
 
 % Initialize the combined mask
@@ -85,10 +86,12 @@ f = 300;
 %  point 11;
 %  point 12;
 %  vanish point
-px_vertices2d = select_points(image)
+px_vertices2d = select_points(image);
+
+% focal length estimation
 f=focal_length(px_vertices2d)
 % #########################################################
-% STEP2  calcule Vertices in 3D using camera focal length
+% calcule Vertices in 3D using camera focal length
 [px_h, px_w, c] = size(image);
 % invert "y" pixel s
 vertices2d(:, 1) = px_vertices2d(:, 1);
@@ -96,26 +99,10 @@ vertices2d(:, 2) = (px_h - px_vertices2d(:, 2) + 1);
 
 vertices3d = vertices3D(vertices2d, f);
 
-% invert "y" pixel 
-%vertices2d(:, 1) = px_points_coord(:, 1) / px_w;
-%vertices2d(:, 2) = (px_h - px_vertices2d(:, 2) + 1)/ px_w;
-
-%{ 
-plot  points
-figure
-scatter3(vertices3d(:,1), vertices3d(:,2), vertices3d(:,3))
-for i=1:13
-    c=num2str(i);
-    c=[' ',c];
-    text(vertices3d(i,1), vertices3d(i,2),vertices3d(i,3),c)
-end
-xlabel('X')
-ylabel('Y')
-zlabel('Z')
-%}
 % #########################################################
-% STEP 2 save all pixel coordinate into a new matrix (px_x, px_y, rgb values)
+% save all pixel coordinate into a new matrix (px_x, px_y, rgb values)
 px_coord2d = zeros(px_h*px_w, 5);
+
 
 
 for i=1:px_h
@@ -126,9 +113,30 @@ for i=1:px_h
     end
 end
 
+% save all foregroung pixel in a matirx (px_x, px_y, rgb values)
+foreground_size =  size(combinedMask(combinedMask(:,:) == 1), 1)
+size(image)
+size(foreground)
+px_foreground_coord2d = zeros(foreground_size, 5);
 
+itemp = 0;
+
+for i=1:px_h
+    for j=1:px_w
+        if combinedMask(i,j)== 1 
+            itemp = itemp+1;
+           
+            px_foreground_coord2d(itemp,1)=j;
+            px_foreground_coord2d(itemp,2)=i;
+            px_foreground_coord2d(itemp,3:5)=foreground(i,j,:);
+        end
+    end
+end
+
+itemp = itemp
 % invert "y" pixel 
 px_coord2d(:, 2) = px_h - px_coord2d(:, 2) + 1;
+px_foreground_coord2d(:, 2) = px_h - px_foreground_coord2d(:, 2) + 1;
 % scale coordinates
 %px_coord2d(:, 1) =  px_coord2d(:, 1) / px_w;
 %px_coord2d(:, 2) =  px_coord2d(:, 2) / px_h;
@@ -136,12 +144,9 @@ px_coord2d(:, 2) = px_h - px_coord2d(:, 2) + 1;
 height  = vertices3d(7,2);
 leftx   = vertices3d(1,1);
 rightx  = vertices3d(4,1);
-coord3d = image2dto3d(px_coord2d, vertices2d,vertices3d,px_h,px_w,f,height,leftx,rightx);
-%coord3d_big = zeros( ceil(max(coord3d(:,1))),ceil(max(coord3d(:,2))),ceil(max(coord3d(:,3))));
-%coord3d_big(:,1)=coord3d(:,1);
-%size(coord3d)
-%coord3d_big= fillmissing(coord3d_big, "movmedian", 10);
-%size( coord3d_big(coord3d_big~=0))
+
+coord3d = image2dto3d(px_coord2d, vertices2d,vertices3d,f,height,leftx,rightx, px_foreground_coord2d);
+
 
 xx=coord3d(:,1);
 yy=coord3d(:,2);
@@ -172,11 +177,20 @@ end
 
 function coords = select_points(image)
     % this function take as input a image 
-    %return [ vanish point; 
-    %         point 1; down left 
-    %         point 2: down right
-    %         point 7: up left
-    %         point 8] up right
+    % return
+    % [point 1;
+    %  point 2;
+    %  point 3;
+    %  point 4;
+    %  point 5;
+    %  point 6;
+    %  point 7;
+    %  point 8;
+    %  point 9;
+    %  point 10;
+    %  point 11;
+    %  point 12;
+    %  vanish point]
 
     % copy the image
     img = image;
@@ -296,12 +310,11 @@ function vertices3d = vertices3D(vertices2d, f)
     
 end
 
-function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,m,n,f,height,leftx,rightx)
+function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,f,height,leftx,rightx, foreground_coord2d)
     % % input:
     % coord2d: 2d coordinates of all pixels  
     % corners2d: 2d coordinates of corners points 
     % corners3d: 3d coordinates of corners points 
-    % m,n: size of image
     % f:focal length 
     % height: ceil y coordinate 
     % leftx: left wall x coordinate
@@ -309,8 +322,8 @@ function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,m,n,f,height,leftx,
     % output:
     % coord3: 3d coordinates of all pixels  
     % %
-    coord2d(:,1)=coord2d(:,1);%/n;
-    coord2d(:,2)=coord2d(:,2);%/m;
+    %coord2d(:,1)=coord2d(:,1);%;
+    %coord2d(:,2)=coord2d(:,2);%;
     
     
     vp=corners3d(13,:);
@@ -318,41 +331,75 @@ function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,m,n,f,height,leftx,
     t2=corners2d(2,:)-vp(1:2);
     t7=corners2d(7,:)-vp(1:2);
     t8=corners2d(8,:)-vp(1:2);
-    is_bottom__plane_2= @(point2d) (point2d(2) <= t1(2)) && (point2d(2) <= point2d(1)*t1(2)/t1(1)) && (point2d(2) <= point2d(1)*t2(2)/t2(1));
-    is_right_plane_2= @(point2d) (point2d(1) >= t2(1)) && (point2d(2) <= point2d(1)*t8(2)/t8(1)) && (point2d(2)>= point2d(1)*t2(2)/t2(1));
-    is_top_plane_2= @(point2d) (point2d(2)>=t8(2)) && (point2d(2) >= point2d(1)*t8(2)/t8(1)) && (point2d(2)>=point2d(1) * t7(2)/t7(1));
-    is_left_plane_2=@(point2d) (point2d(1) <= t7(1)) && (point2d(2)<=point2d(1) *t7(2)/t7(1)) && (point2d(2)>=point2d(1)*t1(2)/t1(1) );
-    is_center_plane_2 = @(point2d)  (point2d(1)<=t2(1)) && (point2d(1) >=t1(1)) && (point2d(2)<=t7(2)) && (point2d(2) >=t1(2));
+    is_bottom__plane = @(point2d) (point2d(2) <= t1(2)) && (point2d(2) <= point2d(1)*t1(2)/t1(1)) && (point2d(2) <= point2d(1)*t2(2)/t2(1));
+    is_right_plane = @(point2d) (point2d(1) >= t2(1)) && (point2d(2) <= point2d(1)*t8(2)/t8(1)) && (point2d(2)>= point2d(1)*t2(2)/t2(1));
+    is_top_plane = @(point2d) (point2d(2)>=t8(2)) && (point2d(2) >= point2d(1)*t8(2)/t8(1)) && (point2d(2)>=point2d(1) * t7(2)/t7(1));
+    is_left_plane = @(point2d) (point2d(1) <= t7(1)) && (point2d(2)<=point2d(1) *t7(2)/t7(1)) && (point2d(2)>=point2d(1)*t1(2)/t1(1) );
+    is_center_plane = @(point2d)  (point2d(1)<=t2(1)) && (point2d(1) >=t1(1)) && (point2d(2)<=t7(2)) && (point2d(2) >=t1(2));
     
     length=size(coord2d,1);
-    coord3d=zeros(length,6);
+    length_foreground=size(foreground_coord2d,1);
+    coord3d=zeros(length+length_foreground,6);
 
     for i=1:length
         point2d=coord2d(i,1:2);
         coord3d(i,4:6)=coord2d(i,3:5);
-        if is_bottom__plane_2(point2d-vp(1:2))
+        if is_bottom__plane(point2d-vp(1:2))
             coord3d(i,2)=0;
             coord3d(i,3)=-vp(2)/(vp(2)-point2d(2))*f;
             coord3d(i,1)=-coord3d(i,3)/f*(point2d(1)-vp(1))+vp(1);
-        elseif is_top_plane_2(point2d-vp(1:2))
+        elseif is_top_plane(point2d-vp(1:2))
             coord3d(i,2)=height;
             coord3d(i,3)=-(vp(2)-height)/(vp(2)-point2d(2))*f;
             coord3d(i,1)=-coord3d(i,3)/f*(point2d(1)-vp(1))+vp(1); 
-        elseif is_left_plane_2(point2d-vp(1:2))
+        elseif is_left_plane(point2d-vp(1:2))
             coord3d(i,1)=leftx;
             coord3d(i,3)=-(vp(1)-leftx)/(vp(1)-point2d(1))*f;
             coord3d(i,2)=-coord3d(i,3)/f*(point2d(2)-vp(2))+vp(2);
-        elseif is_right_plane_2(point2d-vp(1:2))
+        elseif is_right_plane(point2d-vp(1:2))
             coord3d(i,1)=rightx;
             coord3d(i,3)=-(vp(1)-rightx)/(vp(1)-point2d(1))*f;
             coord3d(i,2)=-coord3d(i,3)/f*(point2d(2)-vp(2))+vp(2);
-        elseif is_center_plane_2(point2d-vp(1:2))
-            coord3d(i,3)=vp(3);
-            coord3d(i,2)=-coord3d(i,3)/f*(point2d(2)-vp(2))+vp(2);
-            coord3d(i,1)=-coord3d(i,3)/f*(point2d(1)-vp(1))+vp(1);
+        elseif is_center_plane(point2d-vp(1:2))
+            coord3d(i,3)= vp(3); 
+            coord3d(i,2)=-vp(3)/f*(point2d(2)-vp(2))+vp(2);
+            coord3d(i,1)=-vp(3)/f*(point2d(1)-vp(1))+vp(1); 
 
         
         end
     end
-end
+    
+    fz_temp = 0;
+    %[fore_x_min, fore_x_min] = [min(foreground_coord2d(:,1)), max(foreground_coord2d(:,1))];
+    %[fore_y_min, fore_y_min] = [min(foreground_coord2d(:,1)), max(foreground_coord2d(:,1))];
+    point2d=foreground_coord2d(1,1:2);
+  
+    if is_bottom__plane(point2d-vp(1:2))
+        fz_temp=-vp(2)/(vp(2)-point2d(2))*f;
+    
+    elseif is_top_plane(point2d-vp(1:2))
+        fz_temp=-(vp(2)-height)/(vp(2)-point2d(2))*f;
+        
+    elseif is_left_plane(point2d-vp(1:2))
+        fz_temp=-(vp(1)-leftx)/(vp(1)-point2d(1))*f;
+    elseif is_right_plane(point2d-vp(1:2))
+        fz_temp= -(vp(1)-rightx)/(vp(1)-point2d(1))*f;
+    elseif is_center_plane(point2d-vp(1:2))
+        fz_temp=vp(3); 
+    end
+    % calculate foregound z
+    vp(3)
+    fz_temp =-1000
+    
+   
+  
+    z_for = fz_temp
+    for i = 1:length_foreground
+        point2d=foreground_coord2d(i,1:2);
+        coord3d(i+length,4:6)=foreground_coord2d(i,3:5);
 
+        coord3d(i+length,3)= z_for; 
+        coord3d(i+length,2)=-z_for/f*(point2d(2)-vp(2))+vp(2);
+        coord3d(i+length,1)=-z_for/f*(point2d(1)-vp(1))+vp(1); 
+    end
+end
