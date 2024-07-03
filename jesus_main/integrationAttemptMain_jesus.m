@@ -145,7 +145,7 @@ height  = vertices3d(7,2);
 leftx   = vertices3d(1,1);
 rightx  = vertices3d(4,1);
 
-coord3d = image2dto3d(px_coord2d, vertices2d,vertices3d,f,height,leftx,rightx, px_foreground_coord2d);
+coord3d = image2dto3d(px_coord2d, vertices2d,vertices3d,f,height,leftx,rightx,px_h, px_w, px_foreground_coord2d);
 
 
 xx=coord3d(:,1);
@@ -310,7 +310,7 @@ function vertices3d = vertices3D(vertices2d, f)
     
 end
 
-function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,f,height,leftx,rightx, foreground_coord2d)
+function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,f,height,leftx,rightx, px_heigth, px_width, foreground_coord2d)
     % % input:
     % coord2d: 2d coordinates of all pixels  
     % corners2d: 2d coordinates of corners points 
@@ -377,6 +377,11 @@ function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,f,height,leftx,righ
     % Calculate points to estimate the object depth
     
     fore_x = min(foreground_coord2d(:,1))
+
+    % select x coordinate if object is near to the right side
+    if px_width - max(foreground_coord2d(:,1)) < fore_x
+        fore_x = max(foreground_coord2d(:,1))
+    end
     fore_y = floor((min(foreground_coord2d(:,2))+min(foreground_coord2d(:,2)))/2)
     
     point2d = [fore_x , fore_y]

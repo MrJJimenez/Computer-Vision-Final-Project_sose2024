@@ -371,8 +371,13 @@ function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,f,height,leftx,righ
     
     % foreground deep estimation
     % Calculate points to estimate the object depth
-    
     fore_x = min(foreground_coord2d(:,1))
+    
+    % select x coordinate if object is near to the right side
+    if px_width - max(foreground_coord2d(:,1)) < fore_x
+        fore_x = max(foreground_coord2d(:,1))
+    end
+    
     fore_y = floor((min(foreground_coord2d(:,2))+min(foreground_coord2d(:,2)))/2)
     point2d = [fore_x , fore_y]
     
