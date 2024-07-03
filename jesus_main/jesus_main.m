@@ -73,27 +73,37 @@ px_coord2d(:, 2) = px_h - px_coord2d(:, 2) + 1;
 height  = vertices3d(7,2);
 leftx   = vertices3d(1,1);
 rightx  = vertices3d(4,1);
-coord3d = image2dto3d(px_coord2d, vertices2d,vertices3d,px_h,px_w,f,height,leftx,rightx);
-s2 = size(coord3d)
-coord3d_down = coord3d(coord3d(:,2)==height);
-coord3d(300)
-s1= size(coord3d_down)
+%coord3d = image2dto3d(px_coord2d, vertices2d,vertices3d,px_h,px_w,f,height,leftx,rightx);
+
+[coord3dp1, coord3dp2, coord3dp3, coord3dp4, coord3dp5] = image2dto3d_2(px_coord2d, vertices2d,vertices3d,px_h,px_w,f,height,leftx,rightx);
+%s2 = size(coord3d)
+%coord3d_down = coord3d(coord3d(:,2)==height);
+%coord3d(300)
+%s1= size(coord3d_down)
 %coord3d_big = zeros( ceil(max(coord3d(:,1))),ceil(max(coord3d(:,2))),ceil(max(coord3d(:,3))));
 %coord3d_big(:,1)=coord3d(:,1);
 %size(coord3d)
 %coord3d_big= fillmissing(coord3d_big, "movmedian", 10);
 %size( coord3d_big(coord3d_big~=0))
+color=coord3dp1(:,4:6)/255;
+ceil((min(coord3dp1(:,1))))
+ceil(max((coord3dp1(:,1))))
+[x, y] = meshgrid(ceil(min(coord3dp1(:,1))):ceil(max((coord3dp1(:,1)))), ceil(min(coord3dp1(:,2))):ceil(max(coord3dp1(:,2))));
+z = zeros(size(x,2), size(y,2));
+C =  zeros(size(x,2), size(y,2), 3); 
+for i =1:size(coord3dp1,1)
+    C(ceil(coord3dp1(i,1)), ceil(coord3dp1(i,1)), 3:5 ) = double(coord3dp1(i,4:6)/255);
+end
+size(y)
+%color = zeros(size(x), size(y))
 
-%{
-[x, y, z] = meshgrid(min(coord3d(:,1)):max((coord3d(:,1))), min(coord3d(:,2)):max(coord3d(:,2)), min(coord3d(:,3)):max(coord3d(:,3)));
-mesh3d = fill3d(coord3d, image, f, px_coord2d(13,:))
 figure;
 %hold on
 
 axis equal;   % Make the axes scales match
  
-surf(x, y, z,  'CData', mesh3d,'edgecolor', 'none');
-%surf(x1, ones(size(R)), y1,  'CData', C,'edgecolor', 'none');
+%surf(x, y, z,  'CData', mesh3d,'edgecolor', 'none');
+surf(x, y, z,  'CData', C,'edgecolor', 'none');
 % Adjust the view
 %view(3);
 
@@ -103,27 +113,25 @@ ylabel('Y-axis');
 zlabel('Z-axis');
 title('3D Surface Plot of RGB Image');
 
-%}
 
 
-xx=coord3d(:,1);
-yy=coord3d(:,2);
-zz=coord3d(:,3);
-max(coord3d(:,1));
-max(coord3d(:,2));
-max(abs(coord3d(:,3)));
+%{
+xx=coord3dp1(:,1);
+yy=coord3dp1(:,2);
+zz=coord3dp1(:,3);
+max(coord3dp1(:,1));
+max(coord3dp1(:,2));
+max(abs(coord3dp1(:,3)));
 vertices3d(1,3);
-color=coord3d(:,4:6)/255;
+color=coord3dp1(:,4:6)/255;
 
 pcshow([xx yy zz],color,'VerticalAxisDir','Down')
 
 set(gcf,'color','[0.94,0.94,0.94]');
 set(gca,'color','[0.94,0.94,0.94]');
 
-for i = 1:20
-    view([i, 80]);
-end
 
+%}
 
 
 function xyxrgb_mesh =  fill3d(mesh3d, img, f, vp)
@@ -352,6 +360,91 @@ function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,m,n,f,height,leftx,
         
         end
     end
+end
+
+
+function [coord3dp1, coord3dp2, coord3dp3, coord3dp4, coord3dp5] = image2dto3d_2(coord2d,corners2d,corners3d,m,n,f,height,leftx,rightx)
+    % % input:
+    % coord2d: 2d coordinates of all pixels  
+    % corners2d: 2d coordinates of corners points 
+    % corners3d: 3d coordinates of corners points 
+    % m,n: size of image
+    % f:focal length 
+    % height: ceil y coordinate 
+    % leftx: left wall x coordinate
+    % rightx: right  wall x coordinate
+    % output:
+    % coord3: 3d coordinates of all pixels  
+    % %
+    coord2d(:,1)=coord2d(:,1);%/n;
+    coord2d(:,2)=coord2d(:,2);%/m;
+    
+    
+    vp=corners3d(13,:);
+    t1=corners2d(1,:)-vp(1:2);
+    t2=corners2d(2,:)-vp(1:2);
+    t7=corners2d(7,:)-vp(1:2);
+    t8=corners2d(8,:)-vp(1:2);
+    is_bottom__plane_2= @(point2d) (point2d(2) <= t1(2)) && (point2d(2) <= point2d(1)*t1(2)/t1(1)) && (point2d(2) <= point2d(1)*t2(2)/t2(1));
+    is_right_plane_2= @(point2d) (point2d(1) >= t2(1)) && (point2d(2) <= point2d(1)*t8(2)/t8(1)) && (point2d(2)>= point2d(1)*t2(2)/t2(1));
+    is_top_plane_2= @(point2d) (point2d(2)>=t8(2)) && (point2d(2) >= point2d(1)*t8(2)/t8(1)) && (point2d(2)>=point2d(1) * t7(2)/t7(1));
+    is_left_plane_2=@(point2d) (point2d(1) <= t7(1)) && (point2d(2)<=point2d(1) *t7(2)/t7(1)) && (point2d(2)>=point2d(1)*t1(2)/t1(1) );
+    is_center_plane_2 = @(point2d)  (point2d(1)<=t2(1)) && (point2d(1) >=t1(1)) && (point2d(2)<=t7(2)) && (point2d(2) >=t1(2));
+    
+    length=size(coord2d,1);
+    %coord3d=zeros(10,6);
+    coord3dp1=zeros(length,6);
+    coord3dp2=zeros(length,6);
+    coord3dp3=zeros(length,6);
+    coord3dp4=zeros(length,6);
+    coord3dp5=zeros(length,6);
+    
+    p1=0;
+    p2=0;
+    p3=0;
+    p4=0;
+    p5=0;
+    for i=1:length
+       
+        point2d=coord2d(i,1:2);
+        %coord3d(i,4:6)=coord2d(i,3:5);
+        if is_bottom__plane_2(point2d-vp(1:2))
+            p1= p1 +1;
+
+            coord3dp1(p1,2)=0;
+            coord3dp1(p1,3)=-vp(2)/(vp(2)-point2d(2))*f;
+            coord3dp1(p1,1)=-coord3dp1(p1,3)/f*(point2d(1)-vp(1))+vp(1);
+            coord3dp1(p1,4:6)=coord2d(i,3:5);
+        elseif is_top_plane_2(point2d-vp(1:2))
+            p2= p2 +1;
+            coord3dp2(p2,2)=height;
+            coord3dp2(p2,3)=-(vp(2)-height)/(vp(2)-point2d(2))*f;
+            coord3dp2(p2,1)=-coord3dp2(p2,3)/f*(point2d(1)-vp(1))+vp(1); 
+            coord3dp2(p2,4:6)=coord2d(i,3:5);
+        elseif is_left_plane_2(point2d-vp(1:2))
+            p3= p3 +1;
+            coord3dp3(p3,1)=leftx;
+            coord3dp3(p3,3)=-(vp(1)-leftx)/(vp(1)-point2d(1))*f;
+            coord3dp3(p3,2)=-coord3dp3(p3,3)/f*(point2d(2)-vp(2))+vp(2);
+            coord3dp3(p3,4:6)=coord2d(i,3:5);
+        elseif is_right_plane_2(point2d-vp(1:2))
+            p4= p4 +1;
+            coord3dp4(p4,1)=rightx;
+            coord3dp4(p4,3)=-(vp(1)-rightx)/(vp(1)-point2d(1))*f;
+            coord3dp4(p4,2)=-coord3dp4(p4,3)/f*(point2d(2)-vp(2))+vp(2);
+            coord3dp4(p4,4:6)=coord2d(i,3:5);
+        elseif is_center_plane_2(point2d-vp(1:2))
+            p5= p5 +1;
+            coord3dp5(p5,3)=vp(3);
+            coord3dp5(p5,2)=-coord3dp5(p5,3)/f*(point2d(2)-vp(2))+vp(2);
+            coord3dp5(p5,1)=-coord3dp5(p5,3)/f*(point2d(1)-vp(1))+vp(1);
+            coord3dp5(p5,4:6)=coord2d(i,3:5);
+
+        
+        end
+    end
+
+    [coord3dp1, coord3dp2, coord3dp3, coord3dp4, coord3dp5];
 end
 
 
