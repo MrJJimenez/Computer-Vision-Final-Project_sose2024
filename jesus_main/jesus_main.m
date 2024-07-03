@@ -23,7 +23,10 @@ f = 300;
 %  point 12;
 %  vanish point
 px_vertices2d = select_points(image)
+
+% Estimate focal length
 f=focal_length(px_vertices2d)
+
 % #########################################################
 % STEP2  calcule Vertices in 3D using camera focal length
 [px_h, px_w, c] = size(image);
@@ -33,25 +36,9 @@ vertices2d(:, 2) = (px_h - px_vertices2d(:, 2) + 1);
 
 vertices3d = vertices3D(vertices2d, f);
 
-% invert "y" pixel 
-%vertices2d(:, 1) = px_points_coord(:, 1) / px_w;
-%vertices2d(:, 2) = (px_h - px_vertices2d(:, 2) + 1)/ px_w;
 
-%{ 
-plot  points
-figure
-scatter3(vertices3d(:,1), vertices3d(:,2), vertices3d(:,3))
-for i=1:13
-    c=num2str(i);
-    c=[' ',c];
-    text(vertices3d(i,1), vertices3d(i,2),vertices3d(i,3),c)
-end
-xlabel('X')
-ylabel('Y')
-zlabel('Z')
-%}
 % #########################################################
-% STEP 2 save all pixel coordinate into a new matrix (px_x, px_y, rgb values)
+% STEP 3 save all pixel coordinate into a new matrix (px_x, px_y, rgb values)
 px_coord2d = zeros(px_h*px_w, 5);
 
 
@@ -70,79 +57,27 @@ px_coord2d(:, 2) = px_h - px_coord2d(:, 2) + 1;
 %px_coord2d(:, 1) =  px_coord2d(:, 1) / px_w;
 %px_coord2d(:, 2) =  px_coord2d(:, 2) / px_h;
 
+% ##########################################################
+% Convert from to 2d to 3d
+
 height  = vertices3d(7,2);
 leftx   = vertices3d(1,1);
 rightx  = vertices3d(4,1);
-coord3d = image2dto3d(px_coord2d, vertices2d,vertices3d,px_h,px_w,f,height,leftx,rightx);
-%coord3d_big = zeros( ceil(max(coord3d(:,1))),ceil(max(coord3d(:,2))),ceil(max(coord3d(:,3))));
-%coord3d_big(:,1)=coord3d(:,1);
-%size(coord3d)
-%coord3d_big= fillmissing(coord3d_big, "movmedian", 10);
-%size( coord3d_big(coord3d_big~=0))
 
-%{
-[x, y, z] = meshgrid(min(coord3d(:,1)):max((coord3d(:,1))), min(coord3d(:,2)):max(coord3d(:,2)), min(coord3d(:,3)):max(coord3d(:,3)));
-mesh3d = fill3d(coord3d, image, f, px_coord2d(13,:))
-figure;
-%hold on
+point_cloud = image2dto3d(px_coord2d, vertices2d,vertices3d,px_h,px_w,f,height,leftx,rightx);
 
-axis equal;   % Make the axes scales match
- 
-surf(x, y, z,  'CData', mesh3d,'edgecolor', 'none');
-%surf(x1, ones(size(R)), y1,  'CData', C,'edgecolor', 'none');
-% Adjust the view
-%view(3);
+x = point_cloud(:,1);
+y = point_cloud(:,2);
+z = point_cloud(:,3);
 
-% Add labels and title
-xlabel('X-axis');
-ylabel('Y-axis');
-zlabel('Z-axis');
-title('3D Surface Plot of RGB Image');
+rgb = point_cloud(:,4:6)/255;
 
-%}
-xx=coord3d(:,1);
-yy=coord3d(:,2);
-zz=coord3d(:,3);
-max(coord3d(:,1))
-max(coord3d(:,2))
-max(abs(coord3d(:,3)))
-vertices3d(1,3)
-color=coord3d(:,4:6)/255;
-
-pcshow([xx yy zz],color,'VerticalAxisDir','Down')
+pcshow([x y z], rgb, 'VerticalAxisDir', 'Down')
 %set(gcf,'color','[0.94,0.94,0.94]');
 %set(gca,'color','[0.94,0.94,0.94]');
 view([0, 0]);
 
-function xyxrgb_mesh =  fill3d(mesh3d, img, f, vp)
-    % Create a meshgrid for the surface plot
-    [m,n,c] = size(img)
-    m
-    n
-    rgb = []
-    rgb_temp = []
-    %[x, y, z] = meshgrid(min(mesh3d(:,1)):max((mesh3d(:,1))), min(mesh3d(:,2)):max(mesh3d(:,2)), min(mesh3d(:,3)):max(mesh3d(:,3)));
-    for i = min(mesh3d(:,1)):max((mesh3d(:,1)))
-        i
-        for j = min(mesh3d(:,2)):max(mesh3d(:,2))
-            j
-            for k = min(mesh3d(:,3)):max(mesh3d(:,3))
-                
-                y2d = int16(m - (f/k)*(j-vp(2)) + vp(2))
-                x2d = -int16((f/k)*(i-vp(1)) + vp(1))
-                if (y2d > m) ||(y2d < 0) || (x2d > n) || (x2d < 0)
-                    rgb_temp = double([0,0,0]);
-                else 
-                    rgb_temp = [double(img(x2d,y2d,1))/255, double(image(x2d,y2d,2))/255, double(image(x2d,y2d,3))/255];
-                end
-                rgb = cat(1, rgb, rgb_temp);
-            end
-        end
-    end
 
-    xyxrgb_mesh = rbg
-
-end
 function f = focal_length(px_coord2d)
 
     len1=sqrt( (px_coord2d(13,1)-px_coord2d(5,1))^2 + (px_coord2d(13,2)-px_coord2d(5,2))^2)
@@ -304,11 +239,11 @@ function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,m,n,f,height,leftx,
     t2=corners2d(2,:)-vp(1:2);
     t7=corners2d(7,:)-vp(1:2);
     t8=corners2d(8,:)-vp(1:2);
-    is_bottom__plane_2= @(point2d) (point2d(2) <= t1(2)) && (point2d(2) <= point2d(1)*t1(2)/t1(1)) && (point2d(2) <= point2d(1)*t2(2)/t2(1));
-    is_right_plane_2= @(point2d) (point2d(1) >= t2(1)) && (point2d(2) <= point2d(1)*t8(2)/t8(1)) && (point2d(2)>= point2d(1)*t2(2)/t2(1));
-    is_top_plane_2= @(point2d) (point2d(2)>=t8(2)) && (point2d(2) >= point2d(1)*t8(2)/t8(1)) && (point2d(2)>=point2d(1) * t7(2)/t7(1));
-    is_left_plane_2=@(point2d) (point2d(1) <= t7(1)) && (point2d(2)<=point2d(1) *t7(2)/t7(1)) && (point2d(2)>=point2d(1)*t1(2)/t1(1) );
-    is_center_plane_2 = @(point2d)  (point2d(1)<=t2(1)) && (point2d(1) >=t1(1)) && (point2d(2)<=t7(2)) && (point2d(2) >=t1(2));
+    is_bottom_plane= @(point2d) (point2d(2) <= t1(2)) && (point2d(2) <= point2d(1)*t1(2)/t1(1)) && (point2d(2) <= point2d(1)*t2(2)/t2(1));
+    is_right_plane= @(point2d) (point2d(1) >= t2(1)) && (point2d(2) <= point2d(1)*t8(2)/t8(1)) && (point2d(2)>= point2d(1)*t2(2)/t2(1));
+    is_top_plane= @(point2d) (point2d(2)>=t8(2)) && (point2d(2) >= point2d(1)*t8(2)/t8(1)) && (point2d(2)>=point2d(1) * t7(2)/t7(1));
+    is_left_plane=@(point2d) (point2d(1) <= t7(1)) && (point2d(2)<=point2d(1) *t7(2)/t7(1)) && (point2d(2)>=point2d(1)*t1(2)/t1(1) );
+    is_center_plane = @(point2d)  (point2d(1)<=t2(1)) && (point2d(1) >=t1(1)) && (point2d(2)<=t7(2)) && (point2d(2) >=t1(2));
     
     length=size(coord2d,1);
     coord3d=zeros(length,6);
@@ -316,23 +251,23 @@ function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,m,n,f,height,leftx,
     for i=1:length
         point2d=coord2d(i,1:2);
         coord3d(i,4:6)=coord2d(i,3:5);
-        if is_bottom__plane_2(point2d-vp(1:2))
+        if is_bottom_plane(point2d-vp(1:2))
             coord3d(i,2)=0;
             coord3d(i,3)=-vp(2)/(vp(2)-point2d(2))*f;
             coord3d(i,1)=-coord3d(i,3)/f*(point2d(1)-vp(1))+vp(1);
-        elseif is_top_plane_2(point2d-vp(1:2))
+        elseif is_top_plane(point2d-vp(1:2))
             coord3d(i,2)=height;
             coord3d(i,3)=-(vp(2)-height)/(vp(2)-point2d(2))*f;
             coord3d(i,1)=-coord3d(i,3)/f*(point2d(1)-vp(1))+vp(1); 
-        elseif is_left_plane_2(point2d-vp(1:2))
+        elseif is_left_plane(point2d-vp(1:2))
             coord3d(i,1)=leftx;
             coord3d(i,3)=-(vp(1)-leftx)/(vp(1)-point2d(1))*f;
             coord3d(i,2)=-coord3d(i,3)/f*(point2d(2)-vp(2))+vp(2);
-        elseif is_right_plane_2(point2d-vp(1:2))
+        elseif is_right_plane(point2d-vp(1:2))
             coord3d(i,1)=rightx;
             coord3d(i,3)=-(vp(1)-rightx)/(vp(1)-point2d(1))*f;
             coord3d(i,2)=-coord3d(i,3)/f*(point2d(2)-vp(2))+vp(2);
-        elseif is_center_plane_2(point2d-vp(1:2))
+        elseif is_center_plane(point2d-vp(1:2))
             coord3d(i,3)=vp(3);
             coord3d(i,2)=-coord3d(i,3)/f*(point2d(2)-vp(2))+vp(2);
             coord3d(i,1)=-coord3d(i,3)/f*(point2d(1)-vp(1))+vp(1);
