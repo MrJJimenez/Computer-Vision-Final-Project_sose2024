@@ -168,7 +168,7 @@ for i=1:size(img,1)
             %maxim=vpz/f*(0-vpy);
             %minim=vpz/f*(size(img,1)-vpy);
             %pixels3D(idx,2)=rescale(y, 0, h, 'InputMin', minim, 'InputMax', maxim);
-            pixels3D(idx,2)=vpz/f*(i-vpy)+vpy;
+            pixels3D(idx,2)=g*(i-vpy)+vpy;
 
 
         %back wall
@@ -196,7 +196,7 @@ for i=1:size(img,1)
             g=-(vpx-nr)/(vpx-j);
             pixels3D(idx,1)=nr;
             pixels3D(idx,3)=g*f;
-            pixels3D(idx,2)=vpz/f*(i-vpy)+vpy;
+            pixels3D(idx,2)=g*(i-vpy)+vpy;
 
 
         %floor;
