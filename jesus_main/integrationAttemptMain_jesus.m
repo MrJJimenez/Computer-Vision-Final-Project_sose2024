@@ -373,10 +373,13 @@ function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,f,height,leftx,righ
     %[fore_x_min, fore_x_min] = [min(foreground_coord2d(:,1)), max(foreground_coord2d(:,1))];
     %[fore_y_min, fore_y_min] = [min(foreground_coord2d(:,1)), max(foreground_coord2d(:,1))];
 
-    % foreground deep estimation
-    fore_x_min = min(foreground_coord2d(:,1))
-    point2d=foreground_coord2d(1,1:2);
+     % foreground deep estimation
+    % Calculate points to estimate the object depth
     
+    fore_x = min(foreground_coord2d(:,1))
+    fore_y = floor((min(foreground_coord2d(:,2))+min(foreground_coord2d(:,2)))/2)
+    
+    point2d = [fore_x , fore_y]
 
     if is_bottom__plane(point2d-vp(1:2))
         fz_temp=-vp(2)/(vp(2)-point2d(2))*f;
@@ -393,7 +396,7 @@ function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,f,height,leftx,righ
     end
     % Calculate foregound z
     vp(3)
-    fz_temp =-1000
+    %fz_temp =-1000
     z_for = fz_temp
     
     point2d=foreground_coord2d(:,1:2);
