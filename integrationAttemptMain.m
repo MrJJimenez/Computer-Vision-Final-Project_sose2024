@@ -374,7 +374,6 @@ function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,f,height,leftx,righ
     
     fore_x = min(foreground_coord2d(:,1))
     fore_y = floor((min(foreground_coord2d(:,2))+min(foreground_coord2d(:,2)))/2)
-    
     point2d = [fore_x , fore_y]
     
 
