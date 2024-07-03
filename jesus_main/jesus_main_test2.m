@@ -23,7 +23,7 @@ f = 300;
 %  point 12;
 %  vanish point
 px_vertices2d = select_points(image)
-
+%{
 % Estimate focal length
 f=focal_length(px_vertices2d)
 
@@ -76,7 +76,7 @@ pcshow([x y z], rgb, 'VerticalAxisDir', 'Down')
 %set(gcf,'color','[0.94,0.94,0.94]');
 %set(gca,'color','[0.94,0.94,0.94]');
 view([0, 0]);
-
+%}
 
 function f = focal_length(px_coord2d)
 
@@ -164,6 +164,7 @@ function coords = select_points(image)
     vertices2D_px(12,:) = [x_max;                                 (x_max-x_vp)*gradient(3) + y_vp];
     vertices2D_px(9,:)  = [(1-y_vp)/gradient(4) + x_vp;           1];
     vertices2D_px(11,:) = [1;                                     (1-x_vp)*gradient(4) + y_vp];
+    
 
     hold on;
     for i = 1:12
@@ -172,7 +173,40 @@ function coords = select_points(image)
         text(vertices2D_px(i,1),vertices2D_px(i,2),num2str(i),'Color', 'green', 'FontSize', 30,'FontWeight', 'bold')
     end
     hold off;
-  
+    % Define the padding size
+    [m,n,c] = size(img)
+    paddingLeft = ceil(min([abs(vertices2D_px(5,1)), abs(vertices2D_px(11,1)), abs(vertices2D_px(3,1)), abs(vertices2D_px(9,1))]))
+    paddingRight = ceil(max([abs(vertices2D_px(4,1)), abs(vertices2D_px(10,1)), abs(vertices2D_px(6,1)), abs(vertices2D_px(12,1))]))-n+1
+    paddingTop = ceil(max([abs(vertices2D_px(9,2)), abs(vertices2D_px(10,2)), abs(vertices2D_px(12,2)), abs(vertices2D_px(11,2))]))
+    paddingBottom = ceil(max([abs(vertices2D_px(3,2)), abs(vertices2D_px(4,2)), abs(vertices2D_px(6,2)), abs(vertices2D_px(5,2))]))-m+1
+
+    
+    % Define the padding color (RGB values between 0 and 255)
+    paddingColor = 0; % Red color
+
+    % Create a new padded image with the specified padding
+    paddedRows = m + paddingTop + paddingBottom;
+    paddedCols = n + paddingLeft + paddingRight;
+    paddedImg = uint8(zeros(paddedRows, paddedCols, c));
+
+    % Fill the new image with the padding color
+    paddedImg(:, :, 1) = paddingColor;
+    paddedImg(:, :, 2) = paddingColor;
+    paddedImg(:, :, 3) = paddingColor;
+
+    % Place the original image in the center of the padded image
+    paddedImg(paddingTop+1:paddingTop+m, paddingLeft+1:paddingLeft+n, :) = img;
+    figure;
+   
+    imshow(paddedImg);
+
+    hold on;
+    for i = 1:12
+        plot([vertices2D_px(i,1)+paddingLeft, x_vp+paddingLeft],[vertices2D_px(i,2)+paddingTop,y_vp+paddingTop],'r-','lineWidth',3)
+        plot(vertices2D_px(i,1)+paddingLeft, vertices2D_px(i,2)+paddingTop, '.', 'MarkerSize', 15, 'LineWidth', 5, 'Color', 'green'); % Point 2
+        text(vertices2D_px(i,1)+paddingLeft,vertices2D_px(i,2)+paddingTop,num2str(i),'Color', 'green', 'FontSize', 30,'FontWeight', 'bold')
+    end
+    hold off;
     % Return coordinates
     coords = [vertices2D_px; vpoint];
 end
