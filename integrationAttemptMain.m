@@ -369,11 +369,11 @@ function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,f,height,leftx,righ
         end
     end
     
-    fz_temp = 0;
-    %[fore_x_min, fore_x_min] = [min(foreground_coord2d(:,1)), max(foreground_coord2d(:,1))];
-    %[fore_y_min, fore_y_min] = [min(foreground_coord2d(:,1)), max(foreground_coord2d(:,1))];
+    % foreground deep estimation
+    % fore_x_min = min(foreground_coord2d(:,1))
     point2d=foreground_coord2d(1,1:2);
-  
+    
+
     if is_bottom__plane(point2d-vp(1:2))
         fz_temp=-vp(2)/(vp(2)-point2d(2))*f;
     
@@ -387,19 +387,20 @@ function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,f,height,leftx,righ
     elseif is_center_plane(point2d-vp(1:2))
         fz_temp=vp(3); 
     end
-    % calculate foregound z
+    % Calculate foregound z
     vp(3)
     fz_temp =-1000
-    
-   
-  
     z_for = fz_temp
-    for i = 1:length_foreground
-        point2d=foreground_coord2d(i,1:2);
-        coord3d(i+length,4:6)=foreground_coord2d(i,3:5);
+    
+    point2d=foreground_coord2d(:,1:2);
+    
+    % Convert foreground 2d coordinate to 3d
+    % Copy all rgb value to the last part of coord3d
+    coord3d(1+length:end,4:6)=foreground_coord2d(:,3:5);
+    
+    % Convert foreground 2d coordinate to 3d
+    coord3d(1+length:end,3)= z_for; 
+    coord3d(1+length:end,2)=-z_for/f*(point2d(:,2)-vp(2))+vp(2);
+    coord3d(1+length:end,1)=-z_for/f*(point2d(:,1)-vp(1))+vp(1); 
 
-        coord3d(i+length,3)= z_for; 
-        coord3d(i+length,2)=-z_for/f*(point2d(2)-vp(2))+vp(2);
-        coord3d(i+length,1)=-z_for/f*(point2d(1)-vp(1))+vp(1); 
-    end
 end
