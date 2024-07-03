@@ -131,7 +131,7 @@ vertices3D(:,1);
 img(1,1,:);
 
 
-function pixels3D = pixels2Dto3D(img,grad,vpx,vpy,vertices,vertices3D,f)
+function pixels3D = pixels2Dto3D(x1,x2,y3,img,grad,vpx,vpy,vertices,vertices3D,f)
 
 m=size(img,1);
 n=size(img,2);
@@ -141,76 +141,84 @@ z=ceil(max(abs(vertices3D(:,3))));
 val=max([x,y,z]);
 
 pixels3D=zeros(m*n,6);
-leftx=vertices(1,1)
-rightx=vertices(2,1)
-H=vertices(1,2)-vertices(7,2)
+leftx=vertices(1,1);
+rightx=vertices(2,1);
+H=vertices(1,2)-vertices(7,2);
 vpz=vertices3D(1,3);
 b=zeros(4,1);
-
+h=vpz/f*(y3-vpy)+vpy;
 vertices(7,2)
 b(1)=vpy-vpx*grad(1);
 b(2)=vpy-vpx*grad(2);
 b(3)=vpy-vpx*grad(3);
 b(4)=vpy-vpx*grad(4);
-c1=0;
-c2=0;
-c3=0;
-c4=0;
-c5=0;
+
 
 for i=1:size(img,1)
     for j=1:size(img,2)
         
         idx=i+n*(j-1);
-        x=i-vpx;
-        y=j-vpy;
         %left wall
         if (j<=leftx) && (i>= grad(3)*j+b(3)) && (i<= grad(1)*j+b(1))
-            pixels3D(idx,1)=leftx;
-            pixels3D(idx,3)=-(vpx-leftx)/(vpx-j)*f;
-            pixels3D(idx,2)=-vpz/f*(i-vpy)+vpy;
-            c1=c1+1;
+            nl=-vpz/f*(x1-vpx)+vpx;
+            g=-(vpx-nl)/(vpx-j);
+            pixels3D(idx,1)=nl;
+            pixels3D(idx,3)=g*f;
+            %y=vpz/f*(i-vpy)+vpy;
+            %maxim=vpz/f*(0-vpy);
+            %minim=vpz/f*(size(img,1)-vpy);
+            %pixels3D(idx,2)=rescale(y, 0, h, 'InputMin', minim, 'InputMax', maxim);
+            pixels3D(idx,2)=vpz/f*(i-vpy)+vpy;
+
 
         %back wall
-        elseif (j>=leftx && j<=rightx && i<=vertices(1,2) && i>= vertices(7,2))
+        elseif (j>=leftx) && (j<=rightx) && (i<=vertices(1,2)) && (i>= vertices(7,2))
             pixels3D(idx,3)=vpz;
-            pixels3D(idx,2)=-vpz/f*(i-vpy)+vpy;
+            pixels3D(idx,2)=vpz/f*(i-vpy)+vpy;
             pixels3D(idx,1)=-vpz/f*(j-vpx)+vpx;
-            c2=c2+1;
+
 
         %ceiling
         elseif (i<= vertices(7,2)) & (j >=(i-b(3))/grad(3)) & (j<=(i-b(4))/grad(4))
-            pixels3D(idx,2)=H;
-            pixels3D(idx,3)=-(vpy-H)/(vpy-i)*f;
-            pixels3D(idx,1)=-vpz/f*(j-vpx)+vpx; 
-            c3=c3+1;
+           h=vpz/f*(y3-vpy)+vpy;
+           pixels3D(idx,2)=h;
+           %pixels3D(idx,3)=-(vpy-H)/(vpy-i)*f;
+           %pixels3D(idx,1)=-vpz/f*(j-vpx)+vpx; 
+           g=(h-vpy)/(i-vpy);
+           pixels3D(idx,1)=-g*(j-vpx)+vpx;
+           pixels3D(idx,3)=g*f;
+           
 
+        
         %right wall
         elseif (j>=rightx) && (i>= grad(4)*j+b(4)) && (i<= grad(2)*j+b(2))
-            pixels3D(idx,1)=rightx;
-            pixels3D(idx,3)=-(vpx-rightx)/(vpx-j)*f;
-            pixels3D(idx,2)=-vpz/f*(i-vpy)+vpy;
-            c4=c4+1;
+            nr=-vpz/f*(x2-vpx)+vpx;
+            g=-(vpx-nr)/(vpx-j);
+            pixels3D(idx,1)=nr;
+            pixels3D(idx,3)=g*f;
+            pixels3D(idx,2)=vpz/f*(i-vpy)+vpy;
+
 
         %floor;
         elseif i>= vertices(1,2) && j >=(i-b(1))/grad(1) && j<=(i-b(2))/grad(2)
             pixels3D(idx,2)=0;
-            pixels3D(idx,3)=-vpy/(vpy-i)*f;
-            pixels3D(idx,1)=-vpz/f*(j-vpx)+vpx;
-            c5=c5+1;
+            %pixels3D(idx,3)=-vpy/(vpy-i)*f;
+            %pixels3D(idx,1)=-vpz/f*(j-vpx)+vpx;
+
+            g=(-vpy)/(i-vpy);
+            pixels3D(idx,1)=-g*(j-vpx)+vpx;
+            pixels3D(idx,3)=g*f;
+
         end
         
         pixels3D(idx,4:6)=img(i,j,:);
-
-
+%
+    %
     end
 end
-        c1
-        c2
-        c3
-        c4
-        c5
+
 end
+
 
 pixels=pixels2Dto3D(img,grad,vpx,vpy,vertices2D,vertices3D,f);
 
