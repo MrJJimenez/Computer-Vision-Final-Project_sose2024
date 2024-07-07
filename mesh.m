@@ -87,7 +87,7 @@ function [vertices,grad] = getVertices(vpx,vpy,x,y,h,w)
     vertices(12,2)=grad(4)*w+vpy-vpx*grad(4);
 end
 
-[vertices2D ,grad]=getVertices(vpx,vpy,x,y,size(img,1),size(img,2))
+[vertices2D ,grad] = getVertices(vpx,vpy,x,y,size(img,1),size(img,2))
 
 function vertices3D = convertVert3D(vpx,vpy,vertices,f)
     l=12;
@@ -220,7 +220,7 @@ end
 end
 
 
-pixels=pixels2Dto3D(img,grad,vpx,vpy,vertices2D,vertices3D,f);
+pixels=pixels2Dto3D(x1,x2,y3,img,grad,vpx,vpy,vertices2D,vertices3D,f);
 
 xx=pixels(:,1);
 yy=pixels(:,2);
