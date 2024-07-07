@@ -21,7 +21,7 @@ numObjects = 1;
 
 
 % Initialize the combined mask
-combinedMask = false(5, size(image, 1), size(image, 2));
+combinedMask = false( size(image, 1), size(image, 2));
 
 % Loop to manually select each foreground object
 for i = 1:numObjects
