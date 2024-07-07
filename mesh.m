@@ -164,10 +164,6 @@ for i=1:size(img,1)
             g=-(vpx-nl)/(vpx-j);
             pixels3D(idx,1)=nl;
             pixels3D(idx,3)=g*f;
-            %y=vpz/f*(i-vpy)+vpy;
-            %maxim=vpz/f*(0-vpy);
-            %minim=vpz/f*(size(img,1)-vpy);
-            %pixels3D(idx,2)=rescale(y, 0, h, 'InputMin', minim, 'InputMax', maxim);
             pixels3D(idx,2)=g*(i-vpy)+vpy;
 
 
@@ -181,9 +177,7 @@ for i=1:size(img,1)
         %ceiling
         elseif (i<= vertices(7,2)) & (j >=(i-b(3))/grad(3)) & (j<=(i-b(4))/grad(4))
            h=vpz/f*(y3-vpy)+vpy;
-           pixels3D(idx,2)=h;
-           %pixels3D(idx,3)=-(vpy-H)/(vpy-i)*f;
-           %pixels3D(idx,1)=-vpz/f*(j-vpx)+vpx; 
+           pixels3D(idx,2)=h; 
            g=(h-vpy)/(i-vpy);
            pixels3D(idx,1)=-g*(j-vpx)+vpx;
            pixels3D(idx,3)=g*f;
@@ -202,9 +196,6 @@ for i=1:size(img,1)
         %floor;
         elseif i>= vertices(1,2) && j >=(i-b(1))/grad(1) && j<=(i-b(2))/grad(2)
             pixels3D(idx,2)=0;
-            %pixels3D(idx,3)=-vpy/(vpy-i)*f;
-            %pixels3D(idx,1)=-vpz/f*(j-vpx)+vpx;
-
             g=(-vpy)/(i-vpy);
             pixels3D(idx,1)=-g*(j-vpx)+vpx;
             pixels3D(idx,3)=g*f;
