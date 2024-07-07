@@ -416,4 +416,83 @@ function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,f,height,leftx,righ
     coord3d(1+length:end,1)=-z_for/f*(point2d(:,1)-vp(1))+vp(1); 
     
 end
+function [coord3d, polygons] = foreground_to_3d_object(foreground_coord2d, corners2d, corners3d, f, height, leftx, rightx, px_heigth, px_width)
+    % Convert 2D foreground coordinates to 3D coordinates and create hierarchical polygons
+    
+    vp = corners3d(13,:);
+    length_foreground = size(foreground_coord2d, 1);
+    coord3d = zeros(length_foreground, 6);
 
+    % Foreground depth estimation
+    fore_x = min(foreground_coord2d(:,1));
+    if px_width - max(foreground_coord2d(:,1)) < fore_x
+        fore_x = max(foreground_coord2d(:,1));
+    end
+    fore_y = floor((min(foreground_coord2d(:,2)) + min(foreground_coord2d(:,2))) / 2);
+    point2d = [fore_x, fore_y];
+
+    % Estimate depth (z_for)
+    z_for = estimate_depth(point2d, vp, height, leftx, rightx, f);
+    
+    % Convert 2D foreground coordinates to 3D
+    point2d = foreground_coord2d(:, 1:2);
+    coord3d(:, 4:6) = foreground_coord2d(:, 3:5); % Copy RGB values
+    coord3d(:, 3) = z_for; 
+    coord3d(:, 2) = -z_for / f * (point2d(:, 2) - vp(2)) + vp(2);
+    coord3d(:, 1) = -z_for / f * (point2d(:, 1) - vp(1)) + vp(1); 
+
+    % Create hierarchical polygons
+    polygons = create_polygons(coord3d, px_heigth, px_width);
+
+    % Visualization (optional)
+    visualize_polygons(coord3d, polygons);
+
+end
+
+function z_for = estimate_depth(point2d, vp, height, leftx, rightx, f)
+    if is_bottom__plane(point2d - vp(1:2))
+        z_for = -vp(2) / (vp(2) - point2d(2)) * f;
+    elseif is_top_plane(point2d - vp(1:2))
+        z_for = -(vp(2) - height) / (vp(2) - point2d(2)) * f;
+    elseif is_left_plane(point2d - vp(1:2))
+        z_for = -(vp(1) - leftx) / (vp(1) - point2d(1)) * f;
+    elseif is_right_plane(point2d - vp(1:2))
+        z_for = -(vp(1) - rightx) / (vp(1) - point2d(1)) * f;
+    elseif is_center_plane(point2d - vp(1:2))
+        z_for = vp(3);
+    else
+        z_for = 0; % Default value if no plane matches
+    end
+end
+
+function polygons = create_polygons(coord3d, px_heigth, px_width)
+    % Create a grid of points and connect them to form polygons
+    num_rows = 20; % Number of rows in the grid
+    num_cols = 20; % Number of columns in the grid
+    polygons = {};
+
+    % Generate grid points
+    for i = 1:num_rows - 1
+        for j = 1:num_cols - 1
+            % Define the vertices of each polygon (quad)
+            v1 = (i - 1) * num_cols + j;
+            v2 = v1 + 1;
+            v3 = v1 + num_cols;
+            v4 = v3 + 1;
+            polygons{end + 1} = [v1, v2, v4, v3];
+        end
+    end
+end
+
+function visualize_polygons(coord3d, polygons)
+    % Visualize the 3D polygons
+    figure;
+    hold on;
+    for i = 1:length(polygons)
+        poly = polygons{i};
+        fill3(coord3d(poly, 1), coord3d(poly, 2), coord3d(poly, 3), 'g');
+    end
+    hold off;
+    axis equal;
+    view(3);
+end
