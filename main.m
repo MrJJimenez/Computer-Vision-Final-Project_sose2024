@@ -17,7 +17,7 @@ imshow(image);
 title('Original Image');
 % Ask the user for the number of foreground objects
 %numObjects = input('Enter the number of foreground objects: ');
-numObjects = input('Enter the number of foreground objects: ');
+numObjects = 1;
 
 
 % Initialize the combined mask
