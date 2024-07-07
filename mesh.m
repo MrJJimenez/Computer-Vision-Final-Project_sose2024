@@ -147,7 +147,7 @@ H=vertices(1,2)-vertices(7,2);
 vpz=vertices3D(1,3);
 b=zeros(4,1);
 h=vpz/f*(y3-vpy)+vpy;
-vertices(7,2)
+vertices(7,2);
 b(1)=vpy-vpx*grad(1);
 b(2)=vpy-vpx*grad(2);
 b(3)=vpy-vpx*grad(3);
@@ -220,14 +220,17 @@ end
 end
 
 
-pixels=pixels2Dto3D(img,grad,vpx,vpy,vertices2D,vertices3D,f);
 
+pixels=pixels2Dto3D(x1,x2,y3,img,grad,vpx,vpy,vertices2D,vertices3D,f);
+
+%pixels=fillmissing(pixels(pixels(:,2)==0,:),'knn',5);
 xx=pixels(:,1);
 yy=pixels(:,2);
 zz=pixels(:,3);
 color=pixels(:,4:6)/255;
 
 pcshow([xx yy zz],color)
+%surf(pixels(1:3),color)
 set(gcf,'color','[0.94,0.94,0.94]');
 set(gca,'color','[0.94,0.94,0.94]');
 view([20, 80]);
