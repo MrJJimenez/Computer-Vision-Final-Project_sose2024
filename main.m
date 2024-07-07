@@ -37,13 +37,13 @@ end
 
 
 % Save the combined mask
-imwrite(combinedMask, 'combined_mask.png');
+%imwrite(combinedMask, 'combined_mask.png');
 
 % Extract the foreground objects using the combined mask
 foreground = bsxfun(@times, image, cast(combinedMask, 'like', image));
 
 % Save the extracted foreground objects
-imwrite(foreground, 'extracted_foreground.png');
+%imwrite(foreground, 'extracted_foreground.png');
 
 % Display the extracted foreground
 
@@ -58,7 +58,7 @@ backgroundDouble = im2double(background);
 filledBackground = inpaintExemplar(backgroundDouble, combinedMask);
 
 % Save the filled background
-imwrite(filledBackground, 'filled_background.png');
+%imwrite(filledBackground, 'filled_background.png');
 
 % Display the filled background
 figure;
@@ -99,19 +99,6 @@ vertices2d(:, 2) = (px_h - px_vertices2d(:, 2) + 1);
 
 vertices3d = vertices3D(vertices2d, f);
 
-% #########################################################
-% save all pixel coordinate into a new matrix (px_x, px_y, rgb values)
-px_coord2d = zeros(px_h*px_w, 5);
-
-
-
-for i=1:px_h
-    for j=1:px_w
-        px_coord2d(j+(i-1)*px_w,1)=j;
-        px_coord2d(j+(i-1)*px_w,2)=i;
-        px_coord2d(j+(i-1)*px_w,3:5)=image(i,j,:);
-    end
-end
 
 % save all foregroung pixel in a matirx (px_x, px_y, rgb values)
 foreground_size =  size(combinedMask(combinedMask(:,:) == 1), 1)
@@ -133,29 +120,21 @@ for i=1:px_h
     end
 end
 
-itemp = itemp
+
 % invert "y" pixel 
-px_coord2d(:, 2) = px_h - px_coord2d(:, 2) + 1;
+
 px_foreground_coord2d(:, 2) = px_h - px_foreground_coord2d(:, 2) + 1;
 % scale coordinates
-%px_coord2d(:, 1) =  px_coord2d(:, 1) / px_w;
-%px_coord2d(:, 2) =  px_coord2d(:, 2) / px_h;
-
-height  = vertices3d(7,2);
-leftx   = vertices3d(1,1);
-rightx  = vertices3d(4,1);
-
-coord3d = image2dto3d(px_coord2d, vertices2d,vertices3d,f,height,leftx,rightx,px_h, px_w, px_foreground_coord2d);
 
 
-xx=coord3d(:,1);
-yy=coord3d(:,2);
-zz=coord3d(:,3);
-max(coord3d(:,1))
-max(coord3d(:,2))
-max(abs(coord3d(:,3)))
-vertices3d(1,3)
-color=coord3d(:,4:6)/255;
+
+pixels3D = pixels2Dto3D(image, vertices2d,vertices3d,f, px_foreground_coord2d);
+
+
+xx=pixels3D(:,1);
+yy=pixels3D(:,2);
+zz=pixels3D(:,3);
+color=pixels3D(:,4:6)/255;
 
 pcshow([xx yy zz],color,'VerticalAxisDir','Down')
 %set(gcf,'color','[0.94,0.94,0.94]');
@@ -310,11 +289,11 @@ function vertices3d = vertices3D(vertices2d, f)
     
 end
 
-function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,f,height,leftx,rightx, px_heigth, px_width, foreground_coord2d)
+function [pixels3D] = pixels2Dto3D(img, vertices2d,vertices3d,f, foreground_coord2d)
     % % input:
     % coord2d: 2d coordinates of all pixels  
-    % corners2d: 2d coordinates of corners points 
-    % corners3d: 3d coordinates of corners points 
+    % vertices2d: 2d coordinates of corners points 
+    % vertices3d: 3d coordinates of corners points 
     % f:focal length 
     % height: ceil y coordinate 
     % leftx: left wall x coordinate
@@ -322,53 +301,61 @@ function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,f,height,leftx,righ
     % output:
     % coord3: 3d coordinates of all pixels  
     % %
-    %coord2d(:,1)=coord2d(:,1);%;
-    %coord2d(:,2)=coord2d(:,2);%;
+
+    H  = vertices3d(7,2);
+    leftx   = vertices3d(1,1);
+    rightx  = vertices3d(4,1);
     
-    
-    vp=corners3d(13,:);
-    t1=corners2d(1,:)-vp(1:2);
-    t2=corners2d(2,:)-vp(1:2);
-    t7=corners2d(7,:)-vp(1:2);
-    t8=corners2d(8,:)-vp(1:2);
-    is_bottom__plane = @(point2d) (point2d(2) <= t1(2)) && (point2d(2) <= point2d(1)*t1(2)/t1(1)) && (point2d(2) <= point2d(1)*t2(2)/t2(1));
+    vp=vertices3d(13,:);
+    t1=vertices2d(1,:)-vp(1:2);
+    t2=vertices2d(2,:)-vp(1:2);
+    t7=vertices2d(7,:)-vp(1:2);
+    t8=vertices2d(8,:)-vp(1:2);
+    is_bottom_plane = @(point2d) (point2d(2) <= t1(2)) && (point2d(2) <= point2d(1)*t1(2)/t1(1)) && (point2d(2) <= point2d(1)*t2(2)/t2(1));
     is_right_plane = @(point2d) (point2d(1) >= t2(1)) && (point2d(2) <= point2d(1)*t8(2)/t8(1)) && (point2d(2)>= point2d(1)*t2(2)/t2(1));
     is_top_plane = @(point2d) (point2d(2)>=t8(2)) && (point2d(2) >= point2d(1)*t8(2)/t8(1)) && (point2d(2)>=point2d(1) * t7(2)/t7(1));
     is_left_plane = @(point2d) (point2d(1) <= t7(1)) && (point2d(2)<=point2d(1) *t7(2)/t7(1)) && (point2d(2)>=point2d(1)*t1(2)/t1(1) );
     is_center_plane = @(point2d)  (point2d(1)<=t2(1)) && (point2d(1) >=t1(1)) && (point2d(2)<=t7(2)) && (point2d(2) >=t1(2));
     
-    length=size(coord2d,1);
+ 
     length_foreground=size(foreground_coord2d,1);
-    coord3d=zeros(length+length_foreground,6);
+    [h, w, c] = size(img)
+    pixels3D = zeros((h*w)+length_foreground,6);
 
-    for i=1:length
-        point2d=coord2d(i,1:2);
-        coord3d(i,4:6)=coord2d(i,3:5);
-        if is_bottom__plane(point2d-vp(1:2))
-            coord3d(i,2)=0;
-            coord3d(i,3)=-vp(2)/(vp(2)-point2d(2))*f;
-            coord3d(i,1)=-coord3d(i,3)/f*(point2d(1)-vp(1))+vp(1);
-        elseif is_top_plane(point2d-vp(1:2))
-            coord3d(i,2)=height;
-            coord3d(i,3)=-(vp(2)-height)/(vp(2)-point2d(2))*f;
-            coord3d(i,1)=-coord3d(i,3)/f*(point2d(1)-vp(1))+vp(1); 
-        elseif is_left_plane(point2d-vp(1:2))
-            coord3d(i,1)=leftx;
-            coord3d(i,3)=-(vp(1)-leftx)/(vp(1)-point2d(1))*f;
-            coord3d(i,2)=-coord3d(i,3)/f*(point2d(2)-vp(2))+vp(2);
-        elseif is_right_plane(point2d-vp(1:2))
-            coord3d(i,1)=rightx;
-            coord3d(i,3)=-(vp(1)-rightx)/(vp(1)-point2d(1))*f;
-            coord3d(i,2)=-coord3d(i,3)/f*(point2d(2)-vp(2))+vp(2);
-        elseif is_center_plane(point2d-vp(1:2))
-            coord3d(i,3)= vp(3); 
-            coord3d(i,2)=-vp(3)/f*(point2d(2)-vp(2))+vp(2);
-            coord3d(i,1)=-vp(3)/f*(point2d(1)-vp(1))+vp(1); 
+    for i=1:size(img,1)
+        for j=1:size(img,2)
 
-        
+            
+            point2d = [j,h-i+1];
+            idx=j+(i-1)*w;
+           
+            pixels3D(idx,4:6) = img(i,j,:);
+            if is_bottom_plane(point2d-vp(1:2))
+                pixels3D(idx,2)=0;
+                pixels3D(idx,3)=-vp(2)/(vp(2)-point2d(2))*f;
+                pixels3D(idx,1)=-pixels3D(idx,3)/f*(point2d(1)-vp(1))+vp(1);
+            elseif is_top_plane(point2d-vp(1:2))
+                pixels3D(idx,2)=H;
+                pixels3D(idx,3)=-(vp(2)-H)/(vp(2)-point2d(2))*f;
+                pixels3D(idx,1)=-pixels3D(idx,3)/f*(point2d(1)-vp(1))+vp(1); 
+            elseif is_left_plane(point2d-vp(1:2))
+                pixels3D(idx,1)=leftx;
+                pixels3D(idx,3)=-(vp(1)-leftx)/(vp(1)-point2d(1))*f;
+                pixels3D(idx,2)=-pixels3D(idx,3)/f*(point2d(2)-vp(2))+vp(2);
+            elseif is_right_plane(point2d-vp(1:2))
+                pixels3D(idx,1)=rightx;
+                pixels3D(idx,3)=-(vp(1)-rightx)/(vp(1)-point2d(1))*f;
+                pixels3D(idx,2)=-pixels3D(idx,3)/f*(point2d(2)-vp(2))+vp(2);
+            elseif is_center_plane(point2d-vp(1:2))
+                pixels3D(idx,3)= vp(3); 
+                pixels3D(idx,2)=-vp(3)/f*(point2d(2)-vp(2))+vp(2);
+                pixels3D(idx,1)=-vp(3)/f*(point2d(1)-vp(1))+vp(1); 
+
+            
+            end
         end
     end
-    
+    %{
     fz_temp = 0;
     %[fore_x_min, fore_x_min] = [min(foreground_coord2d(:,1)), max(foreground_coord2d(:,1))];
     %[fore_y_min, fore_y_min] = [min(foreground_coord2d(:,1)), max(foreground_coord2d(:,1))];
@@ -390,7 +377,7 @@ function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,f,height,leftx,righ
         fz_temp=-vp(2)/(vp(2)-point2d(2))*f;
     
     elseif is_top_plane(point2d-vp(1:2))
-        fz_temp=-(vp(2)-height)/(vp(2)-point2d(2))*f;
+        fz_temp=-(vp(2)-H)/(vp(2)-point2d(2))*f;
         
     elseif is_left_plane(point2d-vp(1:2))
         fz_temp=-(vp(1)-leftx)/(vp(1)-point2d(1))*f;
@@ -407,13 +394,13 @@ function [coord3d] = image2dto3d(coord2d,corners2d,corners3d,f,height,leftx,righ
     point2d=foreground_coord2d(:,1:2);
     
     % Convert foreground 2d coordinate to 3d
-    % Copy all rgb value to the last part of coord3d
-    coord3d(1+length:end,4:6)=foreground_coord2d(:,3:5);
+    % Copy all rgb value to the last part of pixels3D
+    pixels3D(1+length:end,4:6)=foreground_coord2d(:,3:5);
     
     % Convert foreground 2d coordinate to 3d
-    coord3d(1+length:end,3)= z_for; 
-    coord3d(1+length:end,2)=-z_for/f*(point2d(:,2)-vp(2))+vp(2);
-    coord3d(1+length:end,1)=-z_for/f*(point2d(:,1)-vp(1))+vp(1); 
-    
+    pixels3D(1+length:end,3)= z_for; 
+    pixels3D(1+length:end,2)=-z_for/f*(point2d(:,2)-vp(2))+vp(2);
+    pixels3D(1+length:end,1)=-z_for/f*(point2d(:,1)-vp(1))+vp(1); 
+    %}
 end
 
