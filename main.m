@@ -108,10 +108,80 @@ pixels3D = pixels2Dto3D(image, vertices2d,vertices3d,f, foreground, combinedMask
 color=pixels3D(:,4:6)/255;
 pointCloud3d = pointCloud([pixels3D(:,1) pixels3D(:,2) pixels3D(:,3)], Color=color);
 % Display 3D
+figure;
 pcshow(pointCloud3d,'VerticalAxisDir','Down')
+
 %set(gcf,'color','[0.94,0.94,0.94]');
 %set(gca,'color','[0.94,0.94,0.94]');
-view([0, 0]);
+%view([0, 0]);
+disp("done")
+
+
+%rotate 
+%find a rotation matrix for the angle
+angle_rad=deg2rad([5,5,5]);   %assuming the input angle is sent in degrees, we need to convert it to radians
+
+% Translation vector
+T = [10;
+     10;
+     400];
+
+% Rotational matrix in x axis
+Rx = [1                  0                       0; 
+       0                  cos(angle_rad(1))       -sin(angle_rad(1));
+       0                  sin(angle_rad(1))       cos(angle_rad(1))] ;
+
+% Rotational matrix in y axis
+Ry = [cos(angle_rad(2))  0                       sin(angle_rad(2));
+       0                  1                       0;
+       -sin(angle_rad(2)) 0                       cos(angle_rad(2)) ];
+
+% Rotational matrix in z axis
+Rz = [cos(angle_rad(3))  -sin(angle_rad(3))      0;
+       sin(angle_rad(3))  cos(angle_rad(3))       0;
+       0                  0                       1];
+
+R = Rx * Ry * Rz;
+
+new_img = create_new_img(pixels3D, vertices2d(13,1), vertices2d(13,2), f, R, T, px_h, px_w);
+
+
+figure;
+imshow(new_img)
+
+function new_img = create_new_img(pixels3d, vpx, vpy, f, R, T, h, w)
+    
+    pc_center=mean(pixels3d,1);
+    offset=-pc_center(1:3);
+
+    pixels3d_centered=pixels3d(:,1:3)'+offset';
+    pixels3d_transformed=R*pixels3d_centered+T-offset';
+    pixels3d_transformed = pixels3d_transformed';
+
+    length=size(pixels3d,1);
+    vector2d=zeros(length,5);
+    new_img=NaN(h,w,3);
+    for i=1:length
+     
+        vector2d(i,1)= round(-f/pixels3d_transformed(i,3)*(pixels3d_transformed(i,1)-vpx)+vpx);
+        vector2d(i,2)= -round(-f/pixels3d_transformed(i,3)*(pixels3d_transformed(i,2)-vpy)+vpy)+h+1;
+        vector2d(i,3:5)=pixels3d(i,4:6);
+        
+        idx1=int32(vector2d(i,2));
+        idx2=int32(vector2d(i,1));
+
+        if idx1<=h &&idx2<=w &&idx1>=1 && idx2>=1
+      
+            new_img(idx1,idx2,1:3)=vector2d(i,3:5);
+        
+        end
+      
+    end
+    new_img=new_img(:,:,1:3);
+    new_img=fillmissing(new_img,'movmedian',5);
+    new_img=uint8(new_img);
+
+end
 
 function f = focal_length(px_coord2d)
     % This function estimate the camera focal length base on the size and position of the selected rectangle
