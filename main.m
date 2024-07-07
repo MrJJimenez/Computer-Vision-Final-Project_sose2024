@@ -21,7 +21,7 @@ numObjects = 1;
 
 
 % Initialize the combined mask
-combinedMask = false(size(image, 1), size(image, 2));
+combinedMask = false(5, size(image, 1), size(image, 2));
 
 % Loop to manually select each foreground object
 for i = 1:numObjects
@@ -94,28 +94,28 @@ f=focal_length(px_vertices2d)
 % #########################################################
 % calcule Vertices in 3D using camera focal length
 [px_h, px_w, c] = size(image);
-% invert "y" pixel s
+% invert "y" pixels
 vertices2d(:, 1) = px_vertices2d(:, 1);
 vertices2d(:, 2) = (px_h - px_vertices2d(:, 2) + 1);
 
+% Estimate 3d vertices or coorners
 vertices3d = vertices3D(vertices2d, f);
 
-
+% Move 2d pixels to the 5 walls
 pixels3D = pixels2Dto3D(image, vertices2d,vertices3d,f, foreground, combinedMask);
 
 
-xx=pixels3D(:,1);
-yy=pixels3D(:,2);
-zz=pixels3D(:,3);
 color=pixels3D(:,4:6)/255;
 
-pcshow([xx yy zz],color,'VerticalAxisDir','Down')
+% Display 3D
+pcshow([pixels3D(:,1) pixels3D(:,2) pixels3D(:,3)],color,'VerticalAxisDir','Down')
 %set(gcf,'color','[0.94,0.94,0.94]');
 %set(gca,'color','[0.94,0.94,0.94]');
 view([0, 0]);
 
 function f = focal_length(px_coord2d)
-
+    % This function estimate the camera focal length base on the size and position of the selected rectangle
+    % select the maximal distance from the rectangle coorner to the image side
     len1=sqrt( (px_coord2d(13,1)-px_coord2d(5,1))^2 + (px_coord2d(13,2)-px_coord2d(5,2))^2)
     len2=sqrt( (px_coord2d(13,1)-px_coord2d(4,1))^2 + (px_coord2d(13,2)-px_coord2d(4,2))^2)
     len3=sqrt( (px_coord2d(13,1)-px_coord2d(11,1))^2 + (px_coord2d(13,2)-px_coord2d(11,2))^2)
@@ -128,7 +128,8 @@ end
 
 
 function coords = select_points(image)
-    % this function take as input a image 
+    % this function take as input a image and estimate estimate the 12 points described in the paper. 
+    % this vertices are in the image coordinate system
     % return
     % [point 1;
     %  point 2;
@@ -190,7 +191,7 @@ function coords = select_points(image)
     rec_vertices_px(4,:) = p7; %7
 
 
-    % gradient for the foreground
+    % Gradient for the foreground
     
     grad(1) = (rec_vertices_px(1,2)-y_vp)/(rec_vertices_px(1,1)-x_vp);
     grad(2) = (rec_vertices_px(2,2)-y_vp)/(rec_vertices_px(2,1)-x_vp);
@@ -225,8 +226,9 @@ function coords = select_points(image)
     
 end
 function vertices3d = vertices3D(vertices2d, f)
-    % this convert the 2D vertices to 3D
-    % create vertices3d where new coordinates will be saved
+    % This function convert the 2D vertices to 3D
+
+    % Create vertices3d where new coordinates will be saved
     vertices3d = ones(size(vertices2d, 1), 3);
     view_x = vertices2d(13,1);
     view_y = vertices2d(13,2);
@@ -265,6 +267,15 @@ function vertices3d = vertices3D(vertices2d, f)
 end
 
 function [pixels3D] = pixels2Dto3D(img, vertices2d,vertices3d,f, foreground, combinedMask)
+
+    % This function map from 2d coordinate  3d coordinates on the 5 estimated walls
+    % img: image without fore ground objects
+    % vertices2d : vertices 2d fouded above but in new coordinate system where Y is inverted
+    % vertices3d: estimated vertices in 3d, vertices 3d define the dimention of our walls
+    % f: estimated camera focal length since our coordinate system is not scaled to one real reference the focal length is just a scalar.
+    % foreground: image of selected object, size(foreground) == size(img) 
+    % combinedMask: mask of selected object
+
   
     H  = vertices3d(7,2); % height
     leftx   = vertices3d(1,1);
