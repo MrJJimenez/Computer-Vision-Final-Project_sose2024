@@ -86,7 +86,7 @@ f = 300;
 %  point 11;
 %  point 12;
 %  vanish point
-[px_vertices2d, grad]= select_points(image);
+px_vertices2d= select_points(image);
 
 % focal length estimation
 f=focal_length(px_vertices2d)
@@ -154,7 +154,7 @@ function f = focal_length(px_coord2d)
 end
 
 
-function [coords, grad] = select_points(image)
+function coords = select_points(image)
     % this function take as input a image 
     % return
     % [point 1;
@@ -300,7 +300,7 @@ function [pixels3D] = pixels2Dto3D(img, vertices2d,vertices3d,f, foreground_coor
     vp=vertices3d(13,:);
     vpx= vertices3d(13,1);
     vpy= vertices3d(13,2);
-    vpz=vertices3d(1,3);
+
     
     b1=vertices2d(1,:)-vp(1:2); 
     b2=vertices2d(2,:)-vp(1:2); 
