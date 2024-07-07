@@ -128,8 +128,8 @@ end
 
 
 function coords = select_points(image)
-    % this function take as input a image and estimate estimate the 12 points described in the paper. 
-    % this vertices are in the image coordinate system
+    % This function take as input a image and estimate estimate the 12 points described in the paper. 
+    % The vertices are in the image coordinate system
     % return
     % [point 1;
     %  point 2;
