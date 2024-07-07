@@ -58,17 +58,18 @@ backgroundDouble = im2double(background);
 filledBackground = inpaintExemplar(backgroundDouble, combinedMask);
 
 % Save the filled background
-%imwrite(filledBackground, 'filled_background.png');
+imwrite(filledBackground, 'filled_background.png');
 
 % Display the filled background
-figure;
-imshow(filledBackground);
-title('Filled Background');
+%figure;
+%imshow(filledBackground);
+%title('Filled Background');
 
 
 
 % Load the filled background image
 image = imread('filled_background.png');
+
 
 f = 300;
 % #########################################################
@@ -100,35 +101,7 @@ vertices2d(:, 2) = (px_h - px_vertices2d(:, 2) + 1);
 vertices3d = vertices3D(vertices2d, f);
 
 
-% save all foregroung pixel in a matirx (px_x, px_y, rgb values)
-foreground_size =  size(combinedMask(combinedMask(:,:) == 1), 1)
-size(image)
-size(foreground)
-px_foreground_coord2d = zeros(foreground_size, 5);
-
-itemp = 0;
-
-for i=1:px_h
-    for j=1:px_w
-        if combinedMask(i,j)== 1 
-            itemp = itemp+1;
-           
-            px_foreground_coord2d(itemp,1)=j;
-            px_foreground_coord2d(itemp,2)=i;
-            px_foreground_coord2d(itemp,3:5)=foreground(i,j,:);
-        end
-    end
-end
-
-
-% invert "y" pixel 
-
-px_foreground_coord2d(:, 2) = px_h - px_foreground_coord2d(:, 2) + 1;
-% scale coordinates
-
-
-
-pixels3D = pixels2Dto3D(image, vertices2d,vertices3d,f, px_foreground_coord2d, grad);
+pixels3D = pixels2Dto3D(image, vertices2d,vertices3d,f, foreground, combinedMask);
 
 
 xx=pixels3D(:,1);
@@ -291,7 +264,7 @@ function vertices3d = vertices3D(vertices2d, f)
     
 end
 
-function [pixels3D] = pixels2Dto3D(img, vertices2d,vertices3d,f, foreground_coord2d, grad)
+function [pixels3D] = pixels2Dto3D(img, vertices2d,vertices3d,f, foreground, combinedMask)
   
     H  = vertices3d(7,2); % height
     leftx   = vertices3d(1,1);
@@ -312,7 +285,7 @@ function [pixels3D] = pixels2Dto3D(img, vertices2d,vertices3d,f, foreground_coor
     grad(3) = (vertices2d(8,2)-vpy)/(vertices2d(8,1)-vpx); %  
     grad(4) = (vertices2d(7,2)-vpy)/(vertices2d(7,1)-vpx); %  
  
-    floor = @(point2d) (point2d(2) <= b1(2)) && (point2d(2) <= point2d(1)*grad(1)) && (point2d(2) <= point2d(1)*grad(2));
+    bottom = @(point2d) (point2d(2) <= b1(2)) && (point2d(2) <= point2d(1)*grad(1)) && (point2d(2) <= point2d(1)*grad(2));
     right_wall = @(point2d) (point2d(1) >= b2(1)) && (point2d(2) <= point2d(1)*grad(3)) && (point2d(2)>= point2d(1)*grad(2));
     ceiling = @(point2d) (point2d(2)>=b8(2)) && (point2d(2) >= point2d(1)*grad(3)) && (point2d(2)>=point2d(1) * grad(4));
     left_wall = @(point2d) (point2d(1) <= b7(1)) && (point2d(2) <= point2d(1) * grad(4)) && (point2d(2)>=point2d(1)*grad(1) );
@@ -321,9 +294,10 @@ function [pixels3D] = pixels2Dto3D(img, vertices2d,vertices3d,f, foreground_coor
  
    
 
-    length_foreground=size(foreground_coord2d,1);
-    [h, w, c] = size(img)
-    pixels3D = zeros((h*w),6);
+    foreground_size = size(combinedMask(combinedMask(:,:) == 1), 1)
+    [h, w, c] = size(img);
+    length = h*w;
+    pixels3D = zeros(length+foreground_size,6);
 
     for i=1:size(img,1)
         for j=1:size(img,2)
@@ -359,7 +333,7 @@ function [pixels3D] = pixels2Dto3D(img, vertices2d,vertices3d,f, foreground_coor
             pixels3D(idx,2)=-pixels3D(idx,3)/f*(point2d(2)-vp(2))+vp(2);
             
             % floor
-            elseif floor(point2d-vp(1:2))
+            elseif bottom(point2d-vp(1:2))
                 pixels3D(idx,2)=0;
                 pixels3D(idx,3)=-vp(2)/(vp(2)-point2d(2))*f;
                 pixels3D(idx,1)=-pixels3D(idx,3)/f*(point2d(1)-vp(1))+vp(1);
@@ -368,7 +342,32 @@ function [pixels3D] = pixels2Dto3D(img, vertices2d,vertices3d,f, foreground_coor
             end
         end
     end
-    %{
+    
+       % save all foregroung pixel in a matirx (px_x, px_y, rgb values)
+    
+
+    foreground_coord2d = zeros(foreground_size, 5);
+
+    itemp = 0;
+
+    for i=1:h
+        for j=1:w
+            if combinedMask(i,j)== 1 
+                itemp = itemp+1;
+            
+                foreground_coord2d(itemp,1)=j;
+                foreground_coord2d(itemp,2)=i;
+                foreground_coord2d(itemp,3:5)=foreground(i,j,:);
+            end
+        end
+    end
+    % invert "y" pixel 
+
+    foreground_coord2d(:, 2) = h - foreground_coord2d(:, 2) + 1;
+    % scale coordinates
+    
+
+    
     fz_temp = 0;
     %[fore_x_min, fore_x_min] = [min(foreground_coord2d(:,1)), max(foreground_coord2d(:,1))];
     %[fore_y_min, fore_y_min] = [min(foreground_coord2d(:,1)), max(foreground_coord2d(:,1))];
@@ -379,28 +378,28 @@ function [pixels3D] = pixels2Dto3D(img, vertices2d,vertices3d,f, foreground_coor
     fore_x = min(foreground_coord2d(:,1))
 
     % select x coordinate if object is near to the right side
-    if px_width - max(foreground_coord2d(:,1)) < fore_x
+    if w- max(foreground_coord2d(:,1)) < fore_x
         fore_x = max(foreground_coord2d(:,1))
     end
     fore_y = floor((min(foreground_coord2d(:,2))+min(foreground_coord2d(:,2)))/2)
     
     point2d = [fore_x , fore_y]
 
-    if is_bottom__plane(point2d-vp(1:2))
+    if bottom(point2d-vp(1:2))
         fz_temp=-vp(2)/(vp(2)-point2d(2))*f;
     
-    elseif is_top_plane(point2d-vp(1:2))
+    elseif ceiling(point2d-vp(1:2))
         fz_temp=-(vp(2)-H)/(vp(2)-point2d(2))*f;
         
-    elseif is_left_plane(point2d-vp(1:2))
+    elseif left_wall(point2d-vp(1:2))
         fz_temp=-(vp(1)-leftx)/(vp(1)-point2d(1))*f;
-    elseif is_right_plane(point2d-vp(1:2))
+    elseif right_wall(point2d-vp(1:2))
         fz_temp= -(vp(1)-rightx)/(vp(1)-point2d(1))*f;
-    elseif is_center_plane(point2d-vp(1:2))
+    elseif back_wall(point2d-vp(1:2))
         fz_temp=vp(3); 
     end
     % Calculate foregound z
-    vp(3)
+    
     %fz_temp =-1000
     z_for = fz_temp
     
@@ -414,6 +413,6 @@ function [pixels3D] = pixels2Dto3D(img, vertices2d,vertices3d,f, foreground_coor
     pixels3D(1+length:end,3)= z_for; 
     pixels3D(1+length:end,2)=-z_for/f*(point2d(:,2)-vp(2))+vp(2);
     pixels3D(1+length:end,1)=-z_for/f*(point2d(:,1)-vp(1))+vp(1); 
-    %}
+    
 end
 
