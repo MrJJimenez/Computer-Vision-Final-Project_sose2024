@@ -106,9 +106,9 @@ pixels3D = pixels2Dto3D(image, vertices2d,vertices3d,f, foreground, combinedMask
 
 
 color=pixels3D(:,4:6)/255;
-
+pointCloud3d = pointCloud([pixels3D(:,1) pixels3D(:,2) pixels3D(:,3)], Color=color);
 % Display 3D
-pcshow([pixels3D(:,1) pixels3D(:,2) pixels3D(:,3)],color,'VerticalAxisDir','Down')
+pcshow(pointCloud3d,'VerticalAxisDir','Down')
 %set(gcf,'color','[0.94,0.94,0.94]');
 %set(gca,'color','[0.94,0.94,0.94]');
 view([0, 0]);
