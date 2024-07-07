@@ -86,7 +86,7 @@ f = 300;
 %  point 11;
 %  point 12;
 %  vanish point
-px_vertices2d = select_points(image);
+[px_vertices2d, grad]= select_points(image);
 
 % focal length estimation
 f=focal_length(px_vertices2d)
@@ -128,7 +128,7 @@ px_foreground_coord2d(:, 2) = px_h - px_foreground_coord2d(:, 2) + 1;
 
 
 
-pixels3D = pixels2Dto3D(image, vertices2d,vertices3d,f, px_foreground_coord2d);
+pixels3D = pixels2Dto3D(image, vertices2d,vertices3d,f, px_foreground_coord2d, grad);
 
 
 xx=pixels3D(:,1);
@@ -154,7 +154,7 @@ function f = focal_length(px_coord2d)
 end
 
 
-function coords = select_points(image)
+function [coords, grad] = select_points(image)
     % this function take as input a image 
     % return
     % [point 1;
@@ -218,9 +218,11 @@ function coords = select_points(image)
 
 
     % gradient for the foreground
-    for i =1:4
-        gradient(i) = (rec_vertices_px(i,2)-y_vp)/(rec_vertices_px(i,1)-x_vp);
-    end
+    
+    grad(1) = (rec_vertices_px(1,2)-y_vp)/(rec_vertices_px(1,1)-x_vp);
+    grad(2) = (rec_vertices_px(2,2)-y_vp)/(rec_vertices_px(2,1)-x_vp);
+    grad(3) = (rec_vertices_px(4,2)-y_vp)/(rec_vertices_px(4,1)-x_vp);
+    grad(4) = (rec_vertices_px(3,2)-y_vp)/(rec_vertices_px(3,1)-x_vp);
 
     vertices2D_px = zeros(12,2);
     vertices2D_px(1,:) = p1;
@@ -228,14 +230,14 @@ function coords = select_points(image)
     vertices2D_px(8,:) = p8;
     vertices2D_px(7,:) = p7;
 
-    vertices2D_px(3,:)  = [(y_max-y_vp)/gradient(1) + x_vp;       y_max];
-    vertices2D_px(5,:)  = [1;                                     (1-x_vp)*gradient(1) + y_vp];
-    vertices2D_px(4,:)  = [(y_max-y_vp)/gradient(2) + x_vp;       y_max];
-    vertices2D_px(6,:)  = [x_max;                                 (x_max-x_vp)*gradient(2) + y_vp];
-    vertices2D_px(10,:) = [(1-y_vp)/gradient(3) + x_vp;           1];
-    vertices2D_px(12,:) = [x_max;                                 (x_max-x_vp)*gradient(3) + y_vp];
-    vertices2D_px(9,:)  = [(1-y_vp)/gradient(4) + x_vp;           1];
-    vertices2D_px(11,:) = [1;                                     (1-x_vp)*gradient(4) + y_vp];
+    vertices2D_px(3,:)  = [(y_max-y_vp)/grad(1) + x_vp;       y_max];
+    vertices2D_px(5,:)  = [1;                                     (1-x_vp)*grad(1) + y_vp];
+    vertices2D_px(4,:)  = [(y_max-y_vp)/grad(2) + x_vp;       y_max];
+    vertices2D_px(6,:)  = [x_max;                                 (x_max-x_vp)*grad(2) + y_vp];
+    vertices2D_px(10,:) = [(1-y_vp)/grad(4) + x_vp;           1];
+    vertices2D_px(12,:) = [x_max;                                 (x_max-x_vp)*grad(4) + y_vp];
+    vertices2D_px(9,:)  = [(1-y_vp)/grad(3) + x_vp;           1];
+    vertices2D_px(11,:) = [1;                                     (1-x_vp)*grad(3) + y_vp];
 
     hold on;
     for i = 1:12
@@ -247,8 +249,8 @@ function coords = select_points(image)
   
     % Return coordinates
     coords = [vertices2D_px; vpoint];
+    
 end
-
 function vertices3d = vertices3D(vertices2d, f)
     % this convert the 2D vertices to 3D
     % create vertices3d where new coordinates will be saved
@@ -289,38 +291,39 @@ function vertices3d = vertices3D(vertices2d, f)
     
 end
 
-function [pixels3D] = pixels2Dto3D(img, vertices2d,vertices3d,f, foreground_coord2d)
-    % % input:
-    % coord2d: 2d coordinates of all pixels  
-    % vertices2d: 2d coordinates of corners points 
-    % vertices3d: 3d coordinates of corners points 
-    % f:focal length 
-    % height: ceil y coordinate 
-    % leftx: left wall x coordinate
-    % rightx: right  wall x coordinate
-    % output:
-    % coord3: 3d coordinates of all pixels  
-    % %
-
-    H  = vertices3d(7,2);
+function [pixels3D] = pixels2Dto3D(img, vertices2d,vertices3d,f, foreground_coord2d, grad)
+  
+    H  = vertices3d(7,2); % height
     leftx   = vertices3d(1,1);
     rightx  = vertices3d(4,1);
     
     vp=vertices3d(13,:);
-    t1=vertices2d(1,:)-vp(1:2);
-    t2=vertices2d(2,:)-vp(1:2);
-    t7=vertices2d(7,:)-vp(1:2);
-    t8=vertices2d(8,:)-vp(1:2);
-    is_bottom_plane = @(point2d) (point2d(2) <= t1(2)) && (point2d(2) <= point2d(1)*t1(2)/t1(1)) && (point2d(2) <= point2d(1)*t2(2)/t2(1));
-    is_right_plane = @(point2d) (point2d(1) >= t2(1)) && (point2d(2) <= point2d(1)*t8(2)/t8(1)) && (point2d(2)>= point2d(1)*t2(2)/t2(1));
-    is_top_plane = @(point2d) (point2d(2)>=t8(2)) && (point2d(2) >= point2d(1)*t8(2)/t8(1)) && (point2d(2)>=point2d(1) * t7(2)/t7(1));
-    is_left_plane = @(point2d) (point2d(1) <= t7(1)) && (point2d(2)<=point2d(1) *t7(2)/t7(1)) && (point2d(2)>=point2d(1)*t1(2)/t1(1) );
-    is_center_plane = @(point2d)  (point2d(1)<=t2(1)) && (point2d(1) >=t1(1)) && (point2d(2)<=t7(2)) && (point2d(2) >=t1(2));
+    vpx= vertices3d(13,1);
+    vpy= vertices3d(13,2);
+    vpz=vertices3d(1,3);
+    
+    b1=vertices2d(1,:)-vp(1:2); 
+    b2=vertices2d(2,:)-vp(1:2); 
+    b7=vertices2d(7,:)-vp(1:2); 
+    b8=vertices2d(8,:)-vp(1:2); 
+
+    grad(1) = (vertices2d(1,2)-vpy)/(vertices2d(1,1)-vpx); %  
+    grad(2) = (vertices2d(2,2)-vpy)/(vertices2d(2,1)-vpx); %  
+    grad(3) = (vertices2d(8,2)-vpy)/(vertices2d(8,1)-vpx); %  
+    grad(4) = (vertices2d(7,2)-vpy)/(vertices2d(7,1)-vpx); %  
+ 
+    floor = @(point2d) (point2d(2) <= b1(2)) && (point2d(2) <= point2d(1)*grad(1)) && (point2d(2) <= point2d(1)*grad(2));
+    right_wall = @(point2d) (point2d(1) >= b2(1)) && (point2d(2) <= point2d(1)*grad(3)) && (point2d(2)>= point2d(1)*grad(2));
+    ceiling = @(point2d) (point2d(2)>=b8(2)) && (point2d(2) >= point2d(1)*grad(3)) && (point2d(2)>=point2d(1) * grad(4));
+    left_wall = @(point2d) (point2d(1) <= b7(1)) && (point2d(2) <= point2d(1) * grad(4)) && (point2d(2)>=point2d(1)*grad(1) );
+    back_wall = @(point2d)  (point2d(1)<=b2(1)) && (point2d(1) >=b1(1)) && (point2d(2)<=b7(2)) && (point2d(2) >=b1(2));
     
  
+   
+
     length_foreground=size(foreground_coord2d,1);
     [h, w, c] = size(img)
-    pixels3D = zeros((h*w)+length_foreground,6);
+    pixels3D = zeros((h*w),6);
 
     for i=1:size(img,1)
         for j=1:size(img,2)
@@ -330,27 +333,37 @@ function [pixels3D] = pixels2Dto3D(img, vertices2d,vertices3d,f, foreground_coor
             idx=j+(i-1)*w;
            
             pixels3D(idx,4:6) = img(i,j,:);
-            if is_bottom_plane(point2d-vp(1:2))
-                pixels3D(idx,2)=0;
-                pixels3D(idx,3)=-vp(2)/(vp(2)-point2d(2))*f;
-                pixels3D(idx,1)=-pixels3D(idx,3)/f*(point2d(1)-vp(1))+vp(1);
-            elseif is_top_plane(point2d-vp(1:2))
-                pixels3D(idx,2)=H;
-                pixels3D(idx,3)=-(vp(2)-H)/(vp(2)-point2d(2))*f;
-                pixels3D(idx,1)=-pixels3D(idx,3)/f*(point2d(1)-vp(1))+vp(1); 
-            elseif is_left_plane(point2d-vp(1:2))
+            
+            % left wall
+            if left_wall(point2d-vp(1:2))
+            
                 pixels3D(idx,1)=leftx;
                 pixels3D(idx,3)=-(vp(1)-leftx)/(vp(1)-point2d(1))*f;
                 pixels3D(idx,2)=-pixels3D(idx,3)/f*(point2d(2)-vp(2))+vp(2);
-            elseif is_right_plane(point2d-vp(1:2))
-                pixels3D(idx,1)=rightx;
-                pixels3D(idx,3)=-(vp(1)-rightx)/(vp(1)-point2d(1))*f;
-                pixels3D(idx,2)=-pixels3D(idx,3)/f*(point2d(2)-vp(2))+vp(2);
-            elseif is_center_plane(point2d-vp(1:2))
+            % back wall
+            elseif back_wall(point2d-vp(1:2))
                 pixels3D(idx,3)= vp(3); 
                 pixels3D(idx,2)=-vp(3)/f*(point2d(2)-vp(2))+vp(2);
                 pixels3D(idx,1)=-vp(3)/f*(point2d(1)-vp(1))+vp(1); 
-
+            
+            % ceiling
+            elseif ceiling(point2d-vp(1:2))
+                pixels3D(idx,2)=H;
+                pixels3D(idx,3)=-(vp(2)-H)/(vp(2)-point2d(2))*f;
+                pixels3D(idx,1)=-pixels3D(idx,3)/f*(point2d(1)-vp(1))+vp(1); 
+            
+            % right wall
+            elseif right_wall(point2d-vp(1:2))
+            pixels3D(idx,1)=rightx;
+            pixels3D(idx,3)=-(vp(1)-rightx)/(vp(1)-point2d(1))*f;
+            pixels3D(idx,2)=-pixels3D(idx,3)/f*(point2d(2)-vp(2))+vp(2);
+            
+            % floor
+            elseif floor(point2d-vp(1:2))
+                pixels3D(idx,2)=0;
+                pixels3D(idx,3)=-vp(2)/(vp(2)-point2d(2))*f;
+                pixels3D(idx,1)=-pixels3D(idx,3)/f*(point2d(1)-vp(1))+vp(1);
+            
             
             end
         end
