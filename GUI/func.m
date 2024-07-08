@@ -124,7 +124,7 @@ disp("done")
 %rotate 
 %find a rotation matrix for the angle
 
-% angle_rad=deg2rad([5,5,5]);   %assuming the input angle is sent in degrees, we need to convert it to radians
+% angle_rad=deg2rad([5,5,5]);  
 % 
 % % Translation vector
 % T = [10;
