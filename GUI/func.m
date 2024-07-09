@@ -426,7 +426,7 @@ function [pixels3D] = pixels2Dto3D(img, vertices2d,vertices3d,f, foreground, com
     %[fore_x_min, fore_x_min] = [min(foreground_coord2d(:,1)), max(foreground_coord2d(:,1))];
     %[fore_y_min, fore_y_min] = [min(foreground_coord2d(:,1)), max(foreground_coord2d(:,1))];
 
-     % foreground deep estimation
+    % Foreground deep estimation
     % Calculate points to estimate the object depth
     
     fore_x = min(foreground_coord2d(:,1))
