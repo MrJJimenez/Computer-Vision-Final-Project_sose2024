@@ -23,7 +23,7 @@ function new_img = create_new_img(pixels3d, vpx, vpy, f, R, T, h, w)
       
     end
     new_img=new_img(:,:,1:3);
-    new_img=fillmissing(new_img,'movmedian',5);
+    new_img=fillmissing(new_img,'movmedian',21);
     new_img=uint8(new_img);
 
 end
