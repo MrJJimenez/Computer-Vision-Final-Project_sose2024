@@ -41,13 +41,13 @@ end
 
 
 % Save the combined mask
-imwrite(combinedMask, 'combined_mask.png');
+% imwrite(combinedMask, 'combined_mask.png');
 
 % Extract the foreground objects using the combined mask
 foreground = bsxfun(@times, image, cast(combinedMask, 'like', image));
 
 % Save the extracted foreground objects
-imwrite(foreground, 'extracted_foreground.png');
+% imwrite(foreground, 'extracted_foreground.png');
 
 % Display the extracted foreground
 
