@@ -10,11 +10,7 @@ Press start to create the 3D model
 Give Rotation and Translation Values to get a 2D image from different angles
 
 # Demo Video
-![Demo Video](demovideo.mp4)
-
-For direct playback, [download the demo video](demovideo.mp4).
+![Demo](demovideo.gif)
 
 # Project Poster
-<embed src="Poster_CV.pdf" type="application/pdf" width="100%" height="600px" />
-
-*Note: If the embedded content doesn't display properly, you can directly access the [demo video](demovideo.mp4) and [project poster](Poster_CV.pdf).*
+[View Project Poster (PDF)](Poster_CV.pdf)
