@@ -9,8 +9,8 @@ use the foreground object to select an object by drawing with clicks around the 
 Press start to create the 3D model
 Give Rotation and Translation Values to get a 2D image from different angles
 
-# Demo Video
-![Demo](demovideo.gif)
+# Demo 
+<img src="demovideo.gif" width="800" alt="Demo">
 
 # Project Poster
 [View Project Poster (PDF)](Poster_CV.pdf)
