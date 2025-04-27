@@ -10,7 +10,7 @@ Press start to create the 3D model
 Give Rotation and Translation Values to get a 2D image from different angles
 
 # Demo 
-<img src="demovideo.gif" width="800" alt="Demo">
+<img src="demovideo.gif" width="1000" alt="Demo">
 
 # Project Poster
 [View Project Poster (PDF)](Poster_CV.pdf)
